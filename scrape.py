@@ -1,8 +1,8 @@
-import bs4, requests, format, download, upload
+import bs4, requests, format, download, upload, sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-def livePage(url, selectors, devsite):
+def livePage(url, selectors, devsite, db):
     raw_html = requests.get(url)
     soup = makeSoup(raw_html.content)
     title = getTitle(soup)
@@ -10,15 +10,27 @@ def livePage(url, selectors, devsite):
     content = getContent(soup, selectors, devsite)
     meta = getMeta(soup)
     data = format.data(title, slug, content, meta)
-    #print(data)
+
     if download.directoryCheck('images'):
         image_file_paths = download.getImageFilePaths()
     else:
         image_file_paths = None
-    #print(data['title'])
-    #print(data['content'])
-    #print(data['slug'])
-    upload.page(devsite, data, image_file_paths)
+
+    #Uploads content & sets the page ID return value (integer) to the page_id variable
+    page_id = upload.page(devsite, data, image_file_paths)
+    #print(page_id)
+
+    #adds the data as a new row in the metaData table within metaHousing
+    db.execute('''INSERT INTO metaData(pageID, pageTitle, slug, meta) VALUES(?,?,?,?)''', (page_id, title, slug, meta))
+
+    #we  can make adjustments  to  the  table here as well if needed.
+    cursor = db.cursor()
+    cursor.close()
+
+    #old code --------
+    #cursor.execute("SELECT * FROM metaData")
+    #print(title + ' | ' + slug + ' | ' + meta)
+    #upload.page(devsite, data, image_file_paths)
 
 def liveBlog(url, selectors, devsite):
     raw_html = requests.get(url)

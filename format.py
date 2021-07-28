@@ -68,7 +68,7 @@ def data(title, slug, content, meta):
             'status': 'publish',
             'content': content,
             'author': '1',
-            'meta': meta,
+            #'meta': meta,
             #'template': 'page template',
             #'excerpt': 'excerpt',
             'format': 'standard'

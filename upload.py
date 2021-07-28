@@ -1,8 +1,8 @@
-import requests, json, base64, jsonFunctions, download
+import requests, json, base64, jsonFunctions, download, sqlite3
 
 user = 'di_dashboard'
 #password = 'bFbj 5bmV lAI6 hK2y zDBI RO8z'
-#Live Sites ^
+
 password = 'j6Dt A7fB sBEl elgz FEmc i7cw'
 rest_point = 'wp-json/wp/v2'
 authString = user + ':' + password
@@ -14,7 +14,6 @@ def getPostHeaders():
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': 'XDEBUG_SESSION=PHPSTORM'
                 }
-    #print(post_headers)
     return post_headers
 
 def getMediaHeaders(file_name):
@@ -25,22 +24,23 @@ def getMediaHeaders(file_name):
                 }
     return media_headers
 
+
+
 def getEndpoint(devsite, type):
     return devsite+rest_point+type
 
 def page(devsite, data, images):
     pages_endpoint = getEndpoint(devsite, '/pages')
     media_endpoint = getEndpoint(devsite, '/media')
-    #print("pages_endpoint: " + str(pages_endpoint))
-    #print("media_endpoint: " + str(media_endpoint))
+    #print(str(data))
 
     page_response = requests.post(pages_endpoint, headers=getPostHeaders(), data=data)
-    print(page_response.status_code)
-
+    #print(page_response.status_code)
+    # if page_response.status_code != 201:
+    #     print(page_response.content)
     page_response = page_response.json()
-    #print(str(page_response))
     page_id = jsonFunctions.getPostId(page_response)
-    #print(str(page_id))
+    #print(page_id)
 
     if images is not None:
         for file in images:
@@ -52,7 +52,7 @@ def page(devsite, data, images):
 
             media_response = requests.post(media_endpoint, headers=getMediaHeaders(filename), data=bin_file)
         download.deleteImgFolder()
-
+    return page_id
 
 def blog(devsite, data, images):
     blog_endpoint = getEndpoint(devsite, '/posts')
