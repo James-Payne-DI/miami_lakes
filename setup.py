@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import requests, scrape, time, selenium, findby, urllib.request
+import requests, scrape, time, selenium, findby, urllib.request, config
 from requests_html import HTMLSession
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -9,7 +9,7 @@ request_headers = {'User-Agent': 'Mozilla/5.0'}
 all_page_titles = []
 blog_page_titles = []
 print('Setup Squad in Action')
-def headlessLogin(site, username='dealerinspire', password='awesome1234'):
+def headlessLogin(site, username=config.DEVSITE_USERNAME, password=config.DEVSITE_PASSWORD):
     print('headlessLogin engaged')
     site = site + 'wp/wp-login.php'
     session = createSession()
@@ -52,7 +52,7 @@ def toDevsite(driver, dev_site):
     time.sleep(2)
     return driver
 
-def loginToDevSite(dev_site, username='dealerinspire', password='awesome1234'):
+def loginToDevSite(dev_site, username=config.DEVSITE_USERNAME, password=config.DEVSITE_PASSWORD):
     driver = createDriver('/Users/jimmypayne/Documents/chromedriver')
     dev_site = dev_site + 'wp/wp-admin'
     driver = toDevsite(driver, dev_site)

@@ -1,9 +1,10 @@
-import requests, json, base64, jsonFunctions, download, sqlite3
+import requests, json, base64, jsonFunctions, download, sqlite3, config
 
-user = 'di_dashboard'
+
+user = config.DI_USER
 #password = 'bFbj 5bmV lAI6 hK2y zDBI RO8z'
 
-password = 'j6Dt A7fB sBEl elgz FEmc i7cw'
+password = config.DI_PASSWORD
 rest_point = 'wp-json/wp/v2'
 authString = user + ':' + password
 

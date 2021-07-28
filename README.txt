@@ -50,8 +50,7 @@ an ID or classname to target
 - I changed my default shell on my Mac at one point today, I don't know if that's a big deal or not.
 - https://support.apple.com/en-us/HT208050 <- there is more info there and the command line stuff is the same ¯\_(ツ)_/¯
 
-Current Github Token: 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
-atom token: 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
+
 
 **********NOTES FOR EXPANSION**************
 #TODO: Error Handling:

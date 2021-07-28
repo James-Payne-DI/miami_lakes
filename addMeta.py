@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import time, selenium, urllib3, re, bs4, requests, csv
+import time, selenium, urllib3, re, bs4, requests, csv, config
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
@@ -15,11 +15,11 @@ from urllib.request import urlopen
 
 def addPageMeta(backend_url,meta):
     #Username
-    user = 'dealerinspire'
+    user = config.DEVSITE_USERNAME
     #raw_input("Enter Username: ")
 
     #Password
-    pwd = 'awesome1234'
+    pwd = config.DEVSITE_PASSWORD
     #raw_input("Enter Password: ")
 
     #name for di auditor
