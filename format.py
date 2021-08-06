@@ -1,8 +1,9 @@
-import bs4, html2text, download, upload
+import bs4, html2text, download, upload, config
 from markdown2 import Markdown
 
 def content(raw_content, devsite):
     count = 0
+    #print(type(raw_content)
     for content in raw_content:
         if content.find('img'):
             raw_content[count] = changeSrc(content, devsite)
@@ -13,7 +14,13 @@ def content(raw_content, devsite):
         #if content.has_attr('class') and 'credit' in content['class']:
         #    continue
         clean_content.append(convert(content.prettify()))
+
+    #turns the clean content back from a list into a string
     clean_content = listToString(clean_content)
+
+    #swaps the dealership info (name,city,state) brought in by the config.py file with the corresponding DI Tags
+    clean_content = replaceWithTags(clean_content, config.dealership_name, config.dealership_city, config.dealership_state)
+    #print(clean_content)
 
     return clean_content
 
@@ -37,6 +44,26 @@ def convert(raw_content):
     text = markdown(text)
     return text
 
+
+def replaceWithTags(content, name, city, state):
+    new_content = ""
+    if str(name) in content:
+        print('names found')
+        new_content = content.replace(str(name), '%%di_name%%')
+    else:
+        print('no names found')
+    if str(city) in content:
+        print('city found')
+        new_content = new_content.replace(str(city), '[di_dealer_option city=""]')
+    else:
+        print('no cities found')
+    if str(state) in content:
+        print('state found')
+        new_content = new_content.replace(str(state), '[di_dealer_option state=""]')
+    else:
+        print('no states found')
+    #di_tags = ['%%di_name%%','[di_dealer_option city=""]','[di_dealer_option state=""]']
+    return new_content
 
 def changeSrc(content, devsite):
     suffix_list = ['jpg', 'gif', 'png', 'tif', 'svg', 'jpeg', 'JPG']

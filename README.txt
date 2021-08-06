@@ -24,15 +24,34 @@ Download Python 3.7.3 - that's the one I use at least
 #using 'python --version' should show you the 2.7.16 or whatever version came by default on your mac
 ---
 
-A devsite
+A devsite/live-site to migrate the content to:
+- here you will need to ensure that the 'Application Passwords' plugin is activated and a key is generated for your user
 
 -------
-make sure the metaHousing.sqlite file is blank
+make sure the metaHousing.sqlite file is blank before running a new batch of pages
+- just go into the file, hit ⌘+A to select everything in the file and delete it.  Then save
 
 ---------
-an ID or classname to target
-#if there are classnames within that element that you want to exclude we can account for that as well.
-`
+ID or CLASSNAME to target:
+- This is where we specify the content we are grabbing from their current site
+- it should be something unique that identifies it compared to the other content on the page
+    (i.e. we don't want to grab the main nav stuff each time)
+    
+- The selectors for the content we want will be adjusted within the first 'for loop' in main.py:
+
+  EXAMPLE 1: 'scrape.livePage(url, 'fullcontentrow', devsite, db)'
+  in the above example, the selector is 'fullcontentrow' - here we were actually targeting a DIPC page
+
+- if there are classnames within that element that you want to exclude we can account for that as well within saniSoup() in scrape.py
+
+  EXAMPLE 2: Looking at the same page as Example 1, we wanted to exclude the Hero Image from the content we grabbed
+  we did this by targeting a unique identifier or 'selector' similar to example 1
+  '''
+  def saniSoup(soup):
+      for div in soup.findAll("div", {'class': 'container-fluid'}):
+  '''
+  here the selector we are targeting is 'container-fluid' which is one of the classnames given to that div.
+  Since the other divs we are targeting in Example 1 won't have that classname, they will be unaffected by saniSoup()
 
 
 

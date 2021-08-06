@@ -24,8 +24,9 @@ def livePage(url, selectors, devsite, db):
     db.execute('''INSERT INTO metaData(pageID, pageTitle, slug, meta) VALUES(?,?,?,?)''', (page_id, title, slug, meta))
 
     #we  can make adjustments  to  the  table here as well if needed.
-    cursor = db.cursor()
-    cursor.close()
+    # cursor = db.cursor()
+    # cursor.close()
+
 
     #old code --------
     #cursor.execute("SELECT * FROM metaData")
@@ -83,7 +84,7 @@ def getSlug(url):
 
 def getContent(soup, selectors, devsite):
     soup = saniSoup(soup)
-    raw_content = soup.findAll('div', {'data-widget-id': selectors})
+    raw_content = soup.findAll('div', {'class': selectors})
     #print(raw_content)
     content = format.content(raw_content, devsite)
     return content
@@ -103,7 +104,7 @@ def getMeta(soup):
         return meta.text
 
 def saniSoup(soup):
-    for div in soup.findAll("div", {'data-widget-id': 'contact1'}):
+    for div in soup.findAll("div", {'class': 'container-fluid'}):
         div.decompose()
     return soup
 
