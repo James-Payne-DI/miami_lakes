@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import ElementNotVisibleException
+from selenium.webdriver.common.keys import Keys
 from urllib.request import urlopen
 
 
@@ -27,7 +28,7 @@ def addPageMeta(backend_url,meta):
     #raw_input("Enter Your Name: ")
 
     #path to chrome driver
-    driverpath = "/Users/jimmypayne/Documents/chromedriver_92"
+    driverpath = "/Users/jimmypayne/Documents/chromedriver"
     #raw_input("Path to Chrome Driver: ")
     driver = webdriver.Chrome(driverpath)
 
@@ -69,14 +70,18 @@ def addPageMeta(backend_url,meta):
     elem = driver.find_element_by_xpath('//*[@id="wpseo-metabox-root"]/div[2]/div/div/section/div/button[1]')
     elem.click()
 
-    time.sleep(0.5)
+    time.sleep(0.15)
 
     #Find Text Box for description
     elem = driver.find_element_by_xpath('//*[@id="snippet-editor-field-description"]/div')
-    time.sleep(0.5)
+    time.sleep(0.15)
+    elem.click()
+    elem.send_keys(Keys.COMMAND, 'a')
+    elem.send_keys(Keys.BACKSPACE)
+    elem.send_keys(Keys.BACKSPACE)
     elem.send_keys(meta)
-    print("Meta Sent")
-
+    #print("Meta Sent")
+    time.sleep(0.1)
     #//*[@id="wpseo-metabox-root"]/div[2]/div/div/section/div/section[2]/div[3]/div[2]/div[1]/div[1]
     #//*[@id="snippet-editor-field-description"]/div/div/div/span
     #
@@ -88,6 +93,6 @@ def addPageMeta(backend_url,meta):
 
     driver.close()
 
-# test_url = 'http://contentdevsandbox.dev.dealerinspire.com/wp/wp-admin/post.php?post=38672&action=edit'
+# test_url = 'http://contentdevsandbox.dev.dealerinspire.com/wp/wp-admin/post.php?post=826&action=edit'
 # test_meta = "TEST META DESCRIPTION"
 # addPageMeta(test_url,test_meta)

@@ -45,6 +45,12 @@ def getPostMeta(dictionary):
     post_meta = dictionary.get('post_meta')
     return post_meta
 
+def getCategories(dictionary):
+    return dictionary.get('categories')
+
+def getTags(dictionary):
+    return dictionary.get('tags')
+
 def formatPageJson(dictionary):
     data = \
     {

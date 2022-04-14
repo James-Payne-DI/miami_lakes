@@ -27,16 +27,12 @@ Download Python 3.7.3 - that's the one I use at least
 A devsite/live-site to migrate the content to:
 - here you will need to ensure that the 'Application Passwords' plugin is activated and a key is generated for your user
 
--------
-make sure the metaHousing.sqlite file is blank before running a new batch of pages
-- just go into the file, hit ⌘+A to select everything in the file and delete it.  Then save
-
 ---------
 ID or CLASSNAME to target:
 - This is where we specify the content we are grabbing from their current site
 - it should be something unique that identifies it compared to the other content on the page
     (i.e. we don't want to grab the main nav stuff each time)
-    
+
 - The selectors for the content we want will be adjusted within the first 'for loop' in main.py:
 
   EXAMPLE 1: 'scrape.livePage(url, 'fullcontentrow', devsite, db)'

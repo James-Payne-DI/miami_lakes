@@ -1,10 +1,10 @@
-import csv, requests, io
-
+import csv, io, requests
 
 def urlsToMigrate(google_sheet_id):
     pages = []
     url = "https://docs.google.com/spreadsheets/d/{0}/export?format=csv".format(google_sheet_id)
-    r = requests.get(url)
+    #urllib3.disable_warnings()
+    r = requests.get(url,verify=False)
     sio = io.StringIO(r.text, newline=None)
     reader = csv.reader(sio, dialect=csv.excel)
 
