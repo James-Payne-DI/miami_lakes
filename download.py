@@ -23,11 +23,13 @@ def images(url_list, devsite):
                 makeNewFolder('images')
             writeFile('images', file_name, image)
             dev_links.append(createDevLink(devsite, file_name))
+            #print(dev_links)
         else:
             print('Could not download ' + url)
-            print('Status code: ' + image.status_code)
+            print('Status code: ' + str(image.status_code))
 
-    optomizeImages('images')
+    if directoryCheck('images') == True:
+        optomizeImages('images')
 
     return dev_links
 

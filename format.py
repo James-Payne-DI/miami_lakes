@@ -6,6 +6,14 @@ def content(raw_content, devsite):
     #print(type(raw_content)
     for content in raw_content:
         if content.find('img'):
+            new_images = content.find_all('img')
+            for new_img in new_images:
+                if new_img.get('alt') == None:
+                    try:
+                        img_title = str(new_img["title"])
+                        new_img["alt"] = img_title
+                    except:
+                        new_img["alt"] = config.dealership_name
             raw_content[count] = changeSrc(content, devsite)
             count += 1
 
@@ -18,9 +26,9 @@ def content(raw_content, devsite):
     #turns the clean content back from a list into a string
     clean_content = listToString(clean_content)
 
-    #swaps the dealership info (name,city,state) brought in by the config.py file with the corresponding DI Tags
-    clean_content = replaceWithTags(clean_content, config.dealership_name, config.dealership_city, config.dealership_state)
-    #print(clean_content)
+    #swaps the dealership info (name,city) brought in by the config.py file with the corresponding DI Tags
+    #clean_content = replaceWithTags(clean_content, config.dealership_name, config.dealership_city)
+
 
     return clean_content
 
@@ -37,7 +45,7 @@ def markdown(text):
 
 def convert(raw_content):
     text_maker = html2text.HTML2Text()
-    text_maker.ignore_images = False
+    text_maker.images_as_html = True
     text_maker.ignore_links = True
     text_maker.body_width = 0
     text = text_maker.handle(raw_content)
@@ -45,45 +53,50 @@ def convert(raw_content):
     return text
 
 
-def replaceWithTags(content, name, city, state):
-    new_content = ""
-    if str(name) in content:
-        print('names found')
-        new_content = content.replace(str(name), '%%di_name%%')
-    else:
-        print('no names found')
-    if str(city) in content:
-        print('city found')
-        new_content = new_content.replace(str(city), '[di_dealer_option city=""]')
-    else:
-        print('no cities found')
-    if str(state) in content:
-        print('state found')
-        new_content = new_content.replace(str(state), '[di_dealer_option state=""]')
-    else:
-        print('no states found')
-    #di_tags = ['%%di_name%%','[di_dealer_option city=""]','[di_dealer_option state=""]']
+def replaceWithTags(raw_content, name=config.dealership_name, city=config.dealership_city):
+    text_maker = html2text.HTML2Text()
+    text_maker.images_as_html = True
+    text_maker.ignore_links = True
+    text_maker.body_width = 0
+    text = text_maker.handle(raw_content)
+    new_content = text.replace(str(name), '%%di_name%%')
+    new_content = new_content.replace(str(city), '[di_dealer_option city=""]')
+    print(new_content)
+    #new_content = new_content.replace(str(state), '[di_dealer_option state=""]')
+    #print('Number of occurrence of each: ')
+    #print('name: ', content.count(str(name)))
+    #print('city: ', content.count(str(city)))
+    #print('state: ', content.count(str(state)))
     return new_content
+
+
 
 def changeSrc(content, devsite):
     suffix_list = ['jpg', 'gif', 'png', 'tif', 'svg', 'jpeg', 'JPG']
     img_src_list = []
     for img in content.findAll('img'):
         if img.has_attr('data-src') and img['data-src'] is not None and img['data-src'].startswith('http'):
+            print("Image has data-src: ", img['data-src'])
             img_src_list.append(img['data-src'])
         elif img.has_attr('src') and img['src'] is not None and img['src'].startswith('http') and img['src'].rindex(".") in suffix_list:
+            print("Image has src: ", img['src'])
             img_src_list.append(img['src'])
         else:
             return content
 
     new_links = download.images(img_src_list, devsite)
+    print(new_links)
     link_index = 0
     for img in content.findAll('img'):
-        #print(new_links[link_index])
-        if img.has_attr('src') and img['src'] is not None:
+        #print(img)
+        if new_links == []:
+            return content
+        elif img.has_attr('src') and img['src'] is not None:
             img['src'] = new_links[link_index]
             link_index += 1
-
+        elif img.has_attr('data-src') and img['data-src'] is not None:
+            img['data-src'] = new_links[link_index]
+            link_index += 1
     return content
 
 def data(title, slug, content, meta):
@@ -103,8 +116,12 @@ def data(title, slug, content, meta):
     return data
 
 def blogData(title, slug, content, meta, date, tags, categories, devsite):
+    # print(tags)
+    # print(categories)
+    # print('-'*50)
     categories = upload.categories(devsite, categories)
-    tags = upload.categories(devsite, tags)
+    tags = upload.tags(devsite, tags)
+    print(date)
     data = {'date': date,
             #'parent': 'parent',
             'title': title,
@@ -120,6 +137,7 @@ def blogData(title, slug, content, meta, date, tags, categories, devsite):
             'tags': tags,
             'categories': categories
             }
+
     return data
 
 
