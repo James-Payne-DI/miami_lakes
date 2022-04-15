@@ -18,7 +18,7 @@ def livePage(url, selectors, devsite, db):
     #print(data)
     #Uploads content & sets the page ID return value (integer) to the page_id variable
     page_id = upload.page(devsite, data, image_file_paths)
-    print(page_id)
+    print("Page ID: " + str(page_id))
 
     #adds the data as a new row in the metaData table within metaHousing
     db.execute('''INSERT INTO metaData(pageID, pageTitle, slug, meta) VALUES(?,?,?,?)''', (page_id, title, slug, meta))
@@ -85,7 +85,15 @@ def getTitle(soup):
                         heading = 'h'+str(count)
                         title = soup.find(heading)
                         count += 1
-    return title.text
+    try:
+        return title.text
+    except:
+        error_text = """
+        ERROR 1.01: TITLE EXISTENCE IN QUESTION
+        - Page Title is None after several attempts to find something that resembles a title, we have failed
+        """
+        print(error_text)
+        return error_text
 
 def getSlug(url):
     slug = url.split('.')[2]
@@ -125,7 +133,7 @@ def getMeta(soup):
     if str(meta.text) == "":
         raw_meta = str(meta).replace('<meta content="','')
         raw_meta = str(raw_meta).replace('" name="description"/>','')
-        print("raw_meta used: " + str(raw_meta))
+        #print("raw_meta used: " + str(raw_meta))
         return raw_meta
     else:
         print("meta.text used")

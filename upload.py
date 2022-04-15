@@ -33,7 +33,7 @@ def page(devsite, data, images):
     #print(str(data))
 
     page_response = requests.post(pages_endpoint, headers=getPostHeaders(), data=data)
-    print(page_response.status_code)
+    print("page response: " + str(page_response.status_code))
     if page_response.status_code != 201:
         print(page_response.content)
     page_response = page_response.json()
