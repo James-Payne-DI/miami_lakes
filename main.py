@@ -89,18 +89,24 @@ db = sqlite3.connect("metaHousing.sqlite")
 
 #loops through the metaData table line by line
 meta_count = 0
+driver_island = None
 for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
+    start = time.time()
+    #do some stuff
+
     #1.) Create the backend URL with the ID and the dev site
     backend_url = createBackendURL(devsite, page_id)
     #print(backend_url)
 
     #2.) use method from addMeta with backend_url & meta as parameters
     meta_count +=1
-    addPageMeta(backend_url,meta)
+    driver_island = addPageMeta(backend_url,meta,driver_island)
     print(str(meta_count) + ': Meta Text Sent')
 
     #3.) all the meta should get  added it with the above command it exists  so when the loop closes the db link will close too
-
+    stop = time.time()
+    duration = stop-start
+    print(duration)
 
 if os.path.exists("metaHousing.sqlite"):
     os.remove("metaHousing.sqlite")

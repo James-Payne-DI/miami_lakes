@@ -84,6 +84,8 @@ ID or CLASSNAME to target:
 #       1. Scrape meta
 #       2. getPostID of page
 #       3. send edits to rest endpoint
+# -> Yoast FAQ: https://developer.yoast.com/customization/apis/rest-api/
+# -> (^workaround) Custom Endpoints - https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/
 
 #TODO: Make this work for blogs. It should basically function the same but you'll need to scrape
 #      date-of-publish, categrory, & tags

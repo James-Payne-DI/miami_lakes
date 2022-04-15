@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import time, selenium, urllib3, re, bs4, requests, csv, config
+import time, selenium, urllib3, re, bs4, requests, csv, config, wpNavigation, sqlite3
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
@@ -13,52 +13,28 @@ from urllib.request import urlopen
 #This program is to work with the page migration tool to migrate the meta separately from the other data
 #This needed to be created because Yoast SEO does not work with REST API which is used for the rest of the data migration
 
+#def manageScript():
 
-def addPageMeta(backend_url,meta):
-    #Username
-    user = config.DEVSITE_USERNAME
-    #raw_input("Enter Username: ")
 
-    #Password
-    pwd = config.DEVSITE_PASSWORD
-    #raw_input("Enter Password: ")
 
-    #name for di auditor
-    name = 'Jimbos Robot'
-    #raw_input("Enter Your Name: ")
+def addPageMeta(backend_url,meta,driver,reset_counter):
+    counter = reset_counter
 
-    #path to chrome driver
-    driverpath = "/Users/jimmypayne/Documents/chromedriver"
-    #raw_input("Path to Chrome Driver: ")
-    driver = webdriver.Chrome(driverpath)
-
-    #Dev-Site
-    #devsite = "http://kendallautowashington.dev.dealerinspire.com/wp/wp-admin/"
-    #raw_input("Enter Dev-Site URL: ")
-
-    #open devsite
-    driver.get(backend_url)
-    time.sleep(2)
-
-    #have driver enter Username
-    elem = driver.find_element_by_id("user_login")
-    elem.send_keys(user)
-
-    #have driver enter password
-    elem = driver.find_element_by_id("user_pass")
-    elem.send_keys(pwd)
-
-    #Click log in button.
-    driver.find_element_by_xpath("//*[@id='wp-submit']").click()
-
-    #enter Developer name for DI auditor
-    elm = driver.find_elements_by_xpath("//*[@id='user']")
-    if len(elm) > 0:
-        elem = driver.find_element_by_xpath("//*[@id='user']")
-        elem.send_keys(name)
-        elem = driver.find_element_by_xpath("//*[@id='form--di-audit-log-name']/div/div[2]/div/fieldset/div[2]/input")
-        driver.execute_script("arguments[0].click();", elem)
-        time.sleep(2)
+    if driver != None and counter < 5:
+        print(counter)
+        driver.get(backend_url)
+    elif driver != None and counter == 5:
+        print(counter)
+        driver.quit()
+        #Login To the Devsite
+        driver = wpNavigation.logInToDevsite(config.DRIVER_PATH,backend_url)
+    elif driver == None:
+        print("Intro Login")
+        #Login To the Devsite
+        driver = wpNavigation.logInToDevsite(config.DRIVER_PATH,backend_url)
+    else:
+        print("ERROR WITH DRIVER DETECTION")
+        return driver
 
     #elem = driver.find_element_by_link_text("Edit Snippet")
 
@@ -91,8 +67,48 @@ def addPageMeta(backend_url,meta):
     driver.execute_script("arguments[0].click();", publish)
     time.sleep(2)
 
-    driver.close()
+    return driver
+    #driver.close()
 
+
+def testcreateBackendURL(dev_site, postID):
+    backend_page_url = dev_site + 'wp/wp-admin/post.php?post='+ str(postID) +'&action=edit'
+    return backend_page_url
+
+
+
+def testMetaLoop(devsite):
+    #set the connection to the database equal to "db"
+    db = sqlite3.connect("metaHousing.sqlite")
+
+    #loops through the metaData table line by line
+    full_meta_count = 0
+    reset_counter = 0
+    driver_island = None
+    for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
+        start = time.time()
+        #do some stuff
+
+        #1.) Create the backend URL with the ID and the dev site
+        backend_url = testcreateBackendURL(devsite, page_id)
+        #print(backend_url)
+
+        #2.) use method from addMeta with backend_url & meta as parameters
+        full_meta_count +=1
+
+        driver_island = addPageMeta(backend_url,meta,driver_island,reset_counter)
+        print(str(full_meta_count) + ': Meta Text Sent')
+        reset_counter += 1
+        if reset_counter == 5: reset_counter = 0
+
+
+        #3.) all the meta should get  added it with the above command it exists  so when the loop closes the db link will close too
+        stop = time.time()
+        duration = stop-start
+        print(duration)
+
+
+testMetaLoop("http://contentdevsandbox2.dev.dealerinspire.com/")
 # test_url = 'http://contentdevsandbox.dev.dealerinspire.com/wp/wp-admin/post.php?post=826&action=edit'
 # test_meta = "TEST META DESCRIPTION"
 # addPageMeta(test_url,test_meta)
