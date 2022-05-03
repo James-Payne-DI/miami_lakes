@@ -17,24 +17,8 @@ from urllib.request import urlopen
 
 
 
-def addPageMeta(backend_url,meta,driver,reset_counter):
-    counter = reset_counter
-
-    if driver != None and counter < 5:
-        print(counter)
-        driver.get(backend_url)
-    elif driver != None and counter == 5:
-        print(counter)
-        driver.quit()
-        #Login To the Devsite
-        driver = wpNavigation.logInToDevsite(config.DRIVER_PATH,backend_url)
-    elif driver == None:
-        print("Intro Login")
-        #Login To the Devsite
-        driver = wpNavigation.logInToDevsite(config.DRIVER_PATH,backend_url)
-    else:
-        print("ERROR WITH DRIVER DETECTION")
-        return driver
+def addPageMeta(backend_url,meta,driver):
+    driver = wpNavigation.logInToDevsite(config.DRIVER_PATH,backend_url)
 
     #elem = driver.find_element_by_link_text("Edit Snippet")
 
@@ -108,7 +92,7 @@ def testMetaLoop(devsite):
         print(duration)
 
 
-testMetaLoop("http://contentdevsandbox2.dev.dealerinspire.com/")
+#testMetaLoop("http://contentdevsandbox2.dev.dealerinspire.com/")
 # test_url = 'http://contentdevsandbox.dev.dealerinspire.com/wp/wp-admin/post.php?post=826&action=edit'
 # test_meta = "TEST META DESCRIPTION"
 # addPageMeta(test_url,test_meta)

@@ -100,6 +100,11 @@ def changeSrc(content, devsite):
     return content
 
 def data(title, slug, content, meta):
+    # print("In Format.py: " + str(meta))
+    metaData = lambda metaText: [metaText]
+    meta = metaData(meta)
+    # print(type(meta))
+    # print('-'*50)
     data = {#'date': 'date',
             #'parent': 'parent',
             'title': title,
@@ -108,7 +113,7 @@ def data(title, slug, content, meta):
             'status': 'publish',
             'content': content,
             'author': '1',
-            #'meta': meta,
+            # 'meta': meta,
             #'template': 'page template',
             #'excerpt': 'excerpt',
             'format': 'standard'

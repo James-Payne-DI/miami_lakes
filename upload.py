@@ -1,6 +1,5 @@
 import requests, json, base64, jsonFunctions, download, sqlite3, config
 
-
 user = config.DI_USER
 password = config.DI_PASSWORD
 rest_point = 'wp-json/wp/v2'
@@ -38,7 +37,7 @@ def page(devsite, data, images):
         print(page_response.content)
     page_response = page_response.json()
     page_id = jsonFunctions.getPostId(page_response)
-    #print(page_id)
+    print(page_id)
 
     if images is not None:
         for file in images:
@@ -50,6 +49,21 @@ def page(devsite, data, images):
 
             media_response = requests.post(media_endpoint, headers=getMediaHeaders(filename), data=bin_file)
         download.deleteImgFolder()
+
+    post_endpoint = pages_endpoint + '/' + str(page_id)
+    # print(post_endpoint)
+    #meta_desc = data["meta"]
+    # print("In upload.py: " + str(meta_desc))
+    # print('-'*50)
+    meta_response = requests.get(post_endpoint)
+    meta_response = meta_response.json()
+    print(meta_response['meta'])
+
+    # meta_response = requests.post(post_endpoint, headers=getPostHeaders(), data={'description':meta_desc})
+    # meta_response = meta_response.json()
+    # post_meta = meta_response.get('meta')
+    # print(post_meta)
+
     return page_id
 
 def blog(devsite, data, images):

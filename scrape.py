@@ -18,7 +18,9 @@ def livePage(url, selectors, devsite, db):
     #print(data)
     #Uploads content & sets the page ID return value (integer) to the page_id variable
     page_id = upload.page(devsite, data, image_file_paths)
-    print("Page ID: " + str(page_id))
+    # print("Page ID: " + str(page_id))
+    page_endpoint =  str(devsite) + "wp-json/wp/v2/pages/" + str(page_id)
+    print(page_endpoint)
 
     #adds the data as a new row in the metaData table within metaHousing
     db.execute('''INSERT INTO metaData(pageID, pageTitle, slug, meta) VALUES(?,?,?,?)''', (page_id, title, slug, meta))
