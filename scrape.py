@@ -1,10 +1,13 @@
-import bs4, requests, format, download, upload, sqlite3, config
+import bs4, requests, sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
+import format, download, upload, config
+from statusReports import GLOBAL_STATUS_REPORT as GSP
 
 def livePage(url, selectors, devsite, db):
     raw_html = requests.get(url)
-    soup = makeSoup(raw_html.content)
+    og_soup = makeSoup(raw_html.content)
+    soup = og_soup
     title = getTitle(soup)
     slug = getSlug(url)
     content = getContent(soup, selectors, devsite)
@@ -31,8 +34,13 @@ def livePage(url, selectors, devsite, db):
 
 def liveBlog(url, selectors, devsite, db):
     raw_html = requests.get(url)
-    soup = makeSoup(raw_html.text)
+    og_soup = makeSoup(raw_html.text)
+    soup = og_soup
+
     title = getTitle(soup)
+    #Creates an instance for this post in the GLOBAL_STATUS_REPORT
+    GSP[url] = {'post_id': '', 'post_data':'','error_list':[],'image_file_paths':[]}
+
     slug = getSlug(url)
     categories = getCategories(soup)
     tags = getTags(soup)
@@ -47,11 +55,19 @@ def liveBlog(url, selectors, devsite, db):
     #print(data)
 
     if download.directoryCheck('images'):
+        #Downloads the images for this post and saves their paths to a variable as a list
         image_file_paths = download.getImageFilePaths()
+        #adds List of image file paths to Global Status Report
+        GSP[url]['image_file_paths'] = image_file_paths
+
     else:
         image_file_paths = None
+        GSP[url]['image_file_paths'] = "No Image File Paths were downloaded for thie Post: " + slug
 
     post_id = upload.blog(devsite, data, image_file_paths)
+    GSP[url]['post_id'] = post_id
+    GSP[url]['post_data'] = data
+
 
     db.execute('''INSERT INTO metaData(pageID, pageTitle, slug, meta) VALUES(?,?,?,?)''', (post_id, title, slug, meta))
 
@@ -82,8 +98,10 @@ def getTitle(soup):
                         count += 1
     try:
         test_title = title.text
+        test_title.replace('\t','')
+        test_title.replace('\n','')
         print("--» Post Title: " + test_title.strip())
-        return title.text
+        return test_title
     except:
         error_text = """
         ERROR 1.01: TITLE EXISTENCE IN QUESTION
@@ -93,11 +111,24 @@ def getTitle(soup):
         return error_text
 
 def getSlug(url):
-    slug = url.split('.')[2]
-    slug_index = slug.index('/')
-    slug = slug[slug_index + 1:]
-    print("Post Slug: " + slug)
-    return slug
+    #Use This Try/Except statement to customize how you find the slug
+    try:
+        #This 'try' section is meant to be adjusted for each run
+        url_pieces = url.split('.')
+        slug = url_pieces[2]
+        slug_pieces = slug.split('/')
+        new_slug = '/' + slug_pieces[-2] + '/'
+        print("Post Slug: " + new_slug)
+        return new_slug
+    except:
+        #If the custom 'try' section fails, this should work, however it will stack parent & child pages into one slug...
+        #i.e. /blogs/news/whats-new-with-us/  ===> /blogs-news-whats-new-with-us/
+        slug = url.split('.')[2]
+        slug_index = slug.index('/')
+        slug = slug[slug_index + 1:]
+        print("Post Slug: " + slug)
+        return slug
+
 
 def getBlogDate(soup):
     #print("--------- getBlogDate SOUP: ---------")
@@ -237,7 +268,7 @@ def getCategories(soup):
     try:
         categories = soup.find('p', {'class': 'postmetadata'})
         if categories is None:
-            print("In 'If/Else' Statement ---> " + error_message)
+            print("››› In 'If/Else' Statement ---> " + error_message)
             return clean_categories
         else:
             for category in categories.findAll('a'):
@@ -251,5 +282,5 @@ def getCategories(soup):
                     clean_categories.append(category)
             return clean_categories
     except:
-        print("In 'Try/Except' Statement ---> " + error_message)
+        print("››› In 'Try/Except' Statement ---> " + error_message)
         return clean_categories

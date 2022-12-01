@@ -3,6 +3,8 @@
 import requests, time, json, jsonFunctions, base64, pprint, Live_Urls, scrape, sqlite3, config, os
 from addMeta import addPageMeta
 from format import formatMonth
+from statusReports import GLOBAL_STATUS_REPORT as GSP
+from statusReports import create_status_report
 
 #TODO: Make this work for blogs. It should basically function the same but you'll need to scrape
 #      date-of-publish, categrory, & tags
@@ -24,10 +26,7 @@ def urlDate(url):
             day = '0' + day
         #turn month into a number but still a string
         month = formatMonth(month)
-
         date = year +'-'+ month +'-'+ day + 'T09:00:00'
-
-        print(date)
         return str(date)
     except:
         return "2022-03-11-T09:00:00"
@@ -56,18 +55,18 @@ live_urls = Live_Urls.urlsToMigrate(config.GOOGLE_SHEET_ID)
 #Deletes the metaHousing.sqlite file if one already exists
 if os.path.exists("metaHousing.sqlite"):
 	os.remove("metaHousing.sqlite")
-	print("The File Has Been Deleted")
+	print("››› Existing version of 'metaHousing.sqlite' found, deleting it...")
 else:
-	print("The File Does Not already Exist")
+	print("››› The File Does Not already Exist")
 
 #Creates Database file and table
 meta_db = open("metaHousing.sqlite", "x")
-print("sqlite file created & opened")
+# print("››› sqlite file created & opened")
 meta_db.close()
 time.sleep(0.25)
 db = sqlite3.connect("metaHousing.sqlite")
 db.execute("CREATE TABLE IF NOT EXISTS metaData (pageID INTEGER, pageTitle TEXT, slug TEXT, meta TEXT)")
-print("Connected to sqlite file -- metaData Table created")
+# print("››› Connected to sqlite file -- metaData Table created")
 
 if type_of_run == "pages":
     #PAGE MIGRATION LOOP
@@ -86,6 +85,9 @@ if type_of_run == "blogs":
 
 #close the database to be safe
 db.close()
+
+#Creates The Status Report .txt file and saves it to your desktop
+create_status_report(GSP)
 
 
 print("\n", "-"*40, "\n", "Meta Loop", "\n", "-"*40, "\n")
@@ -108,7 +110,7 @@ for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
     #2.) use method from addMeta with backend_url & meta as parameters
     meta_count +=1
     driver = addPageMeta(backend_url,meta,driver)
-    print(str(meta_count) + ': Meta Text Sent')
+    print('››› ' + str(meta_count) + ': Meta Text Sent')
 
     #3.) all the meta should get  added it with the above command it exists  so when the loop closes the db link will close too
     stop = time.time()
@@ -120,8 +122,7 @@ for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
 
 if os.path.exists("metaHousing.sqlite"):
     os.remove("metaHousing.sqlite")
-    print("The File Has Been Deleted")
-else:
-	print("The File Does Not Exist")
+    print("››› Deleting 'metaHousing.sqlite' file that was created from this run ...")
+
 
 print("«---------- Run Complete ----------»")

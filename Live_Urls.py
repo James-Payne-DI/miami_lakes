@@ -11,21 +11,24 @@ def urlsToMigrate(google_sheet_id):
     reader = csv.reader(sio, dialect=csv.excel)
 
     for row in reader:
-        slugs.append(getInternalSlug(row[0]))
+        slugs.append(swapInternalSlug(row[0]))
         pages.append(row[0])
 
     config.SLUG_LIST = slugs
     print(config.SLUG_LIST)
     return pages
 
-def getInternalSlug(url):
+def swapInternalSlug(url):
     try:
         url_pieces = url.split('.')
         url_domain = url_pieces[1]
         if domain_check(url_domain):
-            slug = url_pieces[2] + "/"
-            slug = slug.replace("com","")
-            return slug
+            slug = url_pieces[2]
+            slug_pieces = slug.split('/')
+            new_slug = '/' + slug_pieces[-2] + '/'
+            print(new_slug)
+            return new_slug
+
     except:
         print("Issue Finding slug for: " + url)
         return url
