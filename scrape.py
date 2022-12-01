@@ -15,12 +15,12 @@ def livePage(url, selectors, devsite, db):
         image_file_paths = download.getImageFilePaths()
     else:
         image_file_paths = None
-    #print(data)
+
     #Uploads content & sets the page ID return value (integer) to the page_id variable
     page_id = upload.page(devsite, data, image_file_paths)
     # print("Page ID: " + str(page_id))
     page_endpoint =  str(devsite) + "wp-json/wp/v2/pages/" + str(page_id)
-    print(page_endpoint)
+    print("Page ID: " + str(page_endpoint))
 
     #adds the data as a new row in the metaData table within metaHousing
     db.execute('''INSERT INTO metaData(pageID, pageTitle, slug, meta) VALUES(?,?,?,?)''', (page_id, title, slug, meta))
@@ -29,37 +29,28 @@ def livePage(url, selectors, devsite, db):
     # cursor = db.cursor()
     # cursor.close()
 
-
-    #old code --------
-    #cursor.execute("SELECT * FROM metaData")
-    #print(title + ' | ' + slug + ' | ' + meta)
-    #upload.page(devsite, data, image_file_paths)
-
-def liveBlog(url, selectors, devsite, db, url_date):
+def liveBlog(url, selectors, devsite, db):
     raw_html = requests.get(url)
     soup = makeSoup(raw_html.text)
-    #print(raw_html.text)
     title = getTitle(soup)
     slug = getSlug(url)
-    content = getContent(soup, selectors, devsite)
-    meta = getMeta(soup)
-    #date = getDate(soup)
-    date = url_date
-    tags = getTags(soup)
     categories = getCategories(soup)
+    tags = getTags(soup)
+    # Get the date for the blog post
+    date = getBlogDate(soup)
+    meta = getMeta(soup)
+    content = getContent(soup, selectors, devsite)
+
+
+    # categories = getCategories(soup)
     data = format.blogData(title, slug, content, meta, date, tags, categories, devsite)
-    # print(data['tags'])
-    # print(data['categories'])
+    #print(data)
+
     if download.directoryCheck('images'):
         image_file_paths = download.getImageFilePaths()
     else:
         image_file_paths = None
 
-    # print("Tags")
-    # print(tags)
-    # print("Categories")
-    # print(categories)
-    print(date)
     post_id = upload.blog(devsite, data, image_file_paths)
 
     db.execute('''INSERT INTO metaData(pageID, pageTitle, slug, meta) VALUES(?,?,?,?)''', (post_id, title, slug, meta))
@@ -72,8 +63,10 @@ def makeSoup(html):
 
 def getTitle(soup):
     #code on line below is not the original version -- title = soup.find('h1') <-- OG
-    title = soup.find('h1', {'class': 'ddc-page-title'})
-    print(title)
+    # title = soup.find('h1', {'class': 'ddc-page-title'})
+    title = soup.find('div', {'class': 'titleDiv'})
+    title = title.h1.a
+    #print(title)
     if title is None:
         title = soup.find('strong', {'role': 'heading'})
         if title is None:
@@ -88,6 +81,8 @@ def getTitle(soup):
                         title = soup.find(heading)
                         count += 1
     try:
+        test_title = title.text
+        print("--» Post Title: " + test_title.strip())
         return title.text
     except:
         error_text = """
@@ -101,36 +96,60 @@ def getSlug(url):
     slug = url.split('.')[2]
     slug_index = slug.index('/')
     slug = slug[slug_index + 1:]
-    print(slug)
+    print("Post Slug: " + slug)
     return slug
+
+def getBlogDate(soup):
+    #print("--------- getBlogDate SOUP: ---------")
+    date = soup.find('div', {'class': 'dateDiv'})
+
+    date = date.text
+    date = format.blogDate(date)
+    print("--» Post Date: " + date)
+    return date
 
 def getContent(soup, selectors, devsite):
     #can remove specific sections we don't want migrated and deletes them from the soup
     soup = saniSoup(soup)
 
+    #Testing to see if we can find inventory on pages and replace them with shortcodes
+    # inventory_check = inventoryCheck(soup)
+    # if inventory_check:
+    #     print(inventory_check)
+
+
     #gets any tables on the page and formats them as a string
-    table_string = getTables(soup)
-    print(table_string)
-    if table_string != []:
-        soup.find('table').replace_with(table_string)
+    # table_string = getTables(soup)
+    # print(table_string)
+    # if table_string != []:
+    #     soup.find('table').replace_with(table_string)
 
 
     #Finds the Content that we do want i.e. ('div', {'class': selectors})
-    print('Selectors: ' + selectors[0] + ' -- ' + selectors[1] + ' -- ' + selectors[2])
+    print('--» Post Selectors: ' + selectors[0] + ' -- ' + selectors[1] + ' -- ' + selectors[2])
     raw_content = soup.findAll(selectors[0], {selectors[1]: selectors[2]})
-
+    #print(raw_content)
     #makes the soup content nice and pretty.
     content = format.content(raw_content, devsite)
     #print(content)
     return content
 
+#Created while looking at a DealerOn site - please adjust classes for testing
+def inventoryCheck(soup):
+    test_string = '[inventory_lightning type="New,CTP" make="Chevrolet" strict="type" /]'
+    try:
+        inventory_container = soup.find('div', {'id': 'content-main-inventory'})
+        return test_string
+    except:
+        print("Inventory Container Not Detected!")
+        return None
 
 def getMeta(soup):
     meta = soup.find('meta', {'name': 'description'})
     if meta is None:
         backup = getTitle(soup)
         backup = " | " + str(backup)
-        print("No Meta found, using backup!: " + str(backup))
+        # print("No Meta found, using backup!: " + str(backup))
         return str(backup)
     if str(meta.text) == "":
         raw_meta = str(meta).replace('<meta content="','')
@@ -152,24 +171,6 @@ def saniSoup(soup):
             div.decompose()
     return soup
 
-# def getTables(soup):
-#     full_list = []
-#     # Creating list with all tables
-#     tables = soup.find_all('table')
-#     for table in tables:
-#         # Collecting Ddata
-#         for row in table.tbody.find_all('tr'):
-#             # Find all data for each column
-#             columns = row.find_all('td')
-#             full_list.append(columns)
-#
-#     if full_list == []:
-#         print("No Table Found")
-#         return full_list
-#     else:
-#         formatTable(full_list)
-#     print(full_list)
-#     return full_list
 
 def getTables(soup):
     full_list = []
@@ -230,13 +231,25 @@ def getTags(soup):
     return clean_tags
 
 def getCategories(soup):
-    categories = soup.find('div', {'class': 'categories'})
+    # categories = soup.find('div', {'class': 'categories'})
     clean_categories = []
-    if categories is None:
+    error_message = "----- No Categories Found ----- "
+    try:
+        categories = soup.find('p', {'class': 'postmetadata'})
+        if categories is None:
+            print("In 'If/Else' Statement ---> " + error_message)
+            return clean_categories
+        else:
+            for category in categories.findAll('a'):
+                category = category.text
+                category.strip()
+                #Check the banned list of categories
+                cat_check = format.check_category_black_list(category)
+                #If the category string does not match any banned strings in the list...
+                if cat_check == "CLEAN":
+                    #« then it gets added to the 'clean_categories' array
+                    clean_categories.append(category)
+            return clean_categories
+    except:
+        print("In 'Try/Except' Statement ---> " + error_message)
         return clean_categories
-
-
-    for category in categories.findAll('a'):
-        clean_categories.append(category.text)
-
-    return clean_categories

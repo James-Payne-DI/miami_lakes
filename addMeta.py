@@ -51,8 +51,9 @@ def addPageMeta(backend_url,meta,driver):
     driver.execute_script("arguments[0].click();", publish)
     time.sleep(2)
 
+
     return driver
-    #driver.close()
+    # driver.close()
 
 
 def testcreateBackendURL(dev_site, postID):
@@ -80,7 +81,7 @@ def testMetaLoop(devsite):
         #2.) use method from addMeta with backend_url & meta as parameters
         full_meta_count +=1
 
-        driver_island = addPageMeta(backend_url,meta,driver_island,reset_counter)
+        driver_island = addPageMeta(backend_url,meta,driver_island)
         print(str(full_meta_count) + ': Meta Text Sent')
         reset_counter += 1
         if reset_counter == 5: reset_counter = 0
@@ -90,9 +91,15 @@ def testMetaLoop(devsite):
         stop = time.time()
         duration = stop-start
         print(duration)
+    try:
+        driver_island.close()
+        print("_"*50 + '\n' + "Meta Loop Complete")
+        return
+    except:
+        error_message = "Bug Location=testMetaLoop()\n---» Issue Closing the web driver - please close it manually, thank you."
+        print("_"*50 + '\n' + "Meta Loop Complete" + error_message)
 
-
-#testMetaLoop("http://contentdevsandbox2.dev.dealerinspire.com/")
+# testMetaLoop("http://normreeveshondasuperstorenorthrichlandhills.dev.dealerinspire.com/")
 # test_url = 'http://contentdevsandbox.dev.dealerinspire.com/wp/wp-admin/post.php?post=826&action=edit'
 # test_meta = "TEST META DESCRIPTION"
 # addPageMeta(test_url,test_meta)

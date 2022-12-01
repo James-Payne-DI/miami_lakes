@@ -55,9 +55,9 @@ def page(devsite, data, images):
     #meta_desc = data["meta"]
     # print("In upload.py: " + str(meta_desc))
     # print('-'*50)
-    meta_response = requests.get(post_endpoint)
-    meta_response = meta_response.json()
-    print(meta_response['meta'])
+    # meta_response = requests.get(post_endpoint)
+    # meta_response = meta_response.json()
+    # print(meta_response['meta'])
 
     # meta_response = requests.post(post_endpoint, headers=getPostHeaders(), data={'description':meta_desc})
     # meta_response = meta_response.json()
@@ -82,15 +82,16 @@ def blog(devsite, data, images):
 
 
     blog_response = requests.post(blog_endpoint, headers=getPostHeaders(), data=data)
-    print(blog_response.status_code)
+    print("--» Post Response Status Code: " + str(blog_response.status_code))
     if blog_response.status_code != 201:
+        print("--» Post Response Content:")
         print(blog_response.content)
     blog_response = blog_response.json()
     post_id = jsonFunctions.getPostId(blog_response)
 
 
     post_endpoint = blog_endpoint + '/' + str(post_id)
-    print(post_endpoint)
+    print("--» Post Endpoint: " + str(post_endpoint))
     # for i in data['tags']:
     #     tag_response = requests.post(post_endpoint, headers=getPostHeaders(), data=data['tags'])
     #     tag_response = tag_response.json()
@@ -107,12 +108,12 @@ def blog(devsite, data, images):
     tag_response = requests.post(post_endpoint, headers=getPostHeaders(), data={'tags':tag_list})
     tag_response = tag_response.json()
     tag = tag_response.get('tags')
-    print(tag)
+    print("--» Post Tags: ", tag)
 
     category_response = requests.post(post_endpoint, headers=getPostHeaders(), data={'categories':category_list})
     category_response = category_response.json()
     category = category_response.get('categories')
-    print(category)
+    print("--» Post Categories: ", category)
 
 
     if images is not None:

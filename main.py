@@ -13,24 +13,24 @@ def createBackendURL(dev_site, postID):
     return backend_page_url
 
 def urlDate(url):
-    url = str(url)
-    url_split = url.split('/')
-    print(url_split)
-    year = str(url_split[4])
-    month = str(url_split[5])
-    day = str(url_split[6])
+    try:
+        url = str(url)
+        url_split = url.split('/')
+        year = str(url_split[4])
+        month = str(url_split[5])
+        day = str(url_split[6])
+        #Sanitize the date info
+        if len(day) <= 1:
+            day = '0' + day
+        #turn month into a number but still a string
+        month = formatMonth(month)
 
-    #Sanitize the date info
-    if len(day) <= 1:
-        day = '0' + day
-    #turn month into a number but still a string
-    month = formatMonth(month)
+        date = year +'-'+ month +'-'+ day + 'T09:00:00'
 
-    date = year +'-'+ month +'-'+ day + 'T09:00:00'
-
-    return str(date)
-
-
+        print(date)
+        return str(date)
+    except:
+        return "2022-03-11-T09:00:00"
 
 #establishes the connection to the database within the variable db
 #db = sqlite3.connect("metaHousing.sqlite")
@@ -53,6 +53,13 @@ live_urls = Live_Urls.urlsToMigrate(config.GOOGLE_SHEET_ID)
 #First Loop For eash url in the google sheet - this loop creates each page in the list and adds all the data
 #it also fills out metaData table which was created in line 17 above.
 
+#Deletes the metaHousing.sqlite file if one already exists
+if os.path.exists("metaHousing.sqlite"):
+	os.remove("metaHousing.sqlite")
+	print("The File Has Been Deleted")
+else:
+	print("The File Does Not already Exist")
+
 #Creates Database file and table
 meta_db = open("metaHousing.sqlite", "x")
 print("sqlite file created & opened")
@@ -72,8 +79,8 @@ if type_of_run == "pages":
 if type_of_run == "blogs":
     #BLOG MIGRATION LOOP
     for url in live_urls:
-        url_date = urlDate(url)
-        scrape.liveBlog(url, config.LIVE_SELECTOR_ID, devsite, db, url_date)
+        #url_date = urlDate(url)
+        scrape.liveBlog(url, config.LIVE_SELECTOR_ID, devsite, db)
         time.sleep(2)
         db.commit()
 
@@ -89,7 +96,7 @@ db = sqlite3.connect("metaHousing.sqlite")
 
 #loops through the metaData table line by line
 meta_count = 0
-driver_island = None
+driver = None
 for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
     start = time.time()
     #do some stuff
@@ -100,7 +107,7 @@ for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
 
     #2.) use method from addMeta with backend_url & meta as parameters
     meta_count +=1
-    driver_island = addPageMeta(backend_url,meta,driver_island)
+    driver = addPageMeta(backend_url,meta,driver)
     print(str(meta_count) + ': Meta Text Sent')
 
     #3.) all the meta should get  added it with the above command it exists  so when the loop closes the db link will close too
@@ -108,8 +115,13 @@ for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
     duration = stop-start
     print(duration)
 
+    #4.) Close the Driver Window
+    driver.close()
+
 if os.path.exists("metaHousing.sqlite"):
     os.remove("metaHousing.sqlite")
     print("The File Has Been Deleted")
 else:
 	print("The File Does Not Exist")
+
+print("«---------- Run Complete ----------»")

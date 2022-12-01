@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import requests, os, shutil, re, date, time
+import requests, os, shutil, re, date, time, wget
 from io import open as iopen
 
 def images(url_list, devsite):
     if len(url_list) < 1:
-        print('No Images found on the page')
+        print('››› No Images found on the page')
         return
     dev_links = []
     for url in url_list:
@@ -16,25 +16,34 @@ def images(url_list, devsite):
 
         image = None
         if file_suffix in suffix_list:
-            image = requests.get(url)
+            image = requests.get(url, stream = True)
             time.sleep(0.5)
+        #image = checkStatusCode(image)
+
         if image is not None and image.status_code == requests.codes.ok:
             if directoryCheck('images') == False:
                 makeNewFolder('images')
             writeFile('images', file_name, image)
             dev_links.append(createDevLink(devsite, file_name))
+        elif image is not None:
+            if directoryCheck('images') == False:
+                makeNewFolder('images')
+            writeWithWget('images', url)
+            dev_links.append(createDevLink(devsite, file_name))
             #print(dev_links)
         else:
-            print('Could not download ' + url)
-            print('Status code: ' + str(image.status_code))
+            print(str(image.status_code) + ' Could not download: ' + url)
+
 
     if directoryCheck('images') == True:
         optomizeImages('images')
 
+    print(dev_links)
     return dev_links
 
 def createDevLink(devsite, img_name):
     dev_link = "https://di-uploads-development.dealerinspire.com/" + splitString(splitString(devsite, '/')[2], '.')[0] + '/uploads/' + date.getYear() + '/' + date.getMonth() + '/' + img_name
+    print("››› DI Image Link Created:\n" + str(dev_link))
     return dev_link
 
 def cleanUrl(url):
@@ -82,6 +91,17 @@ def makeNewFolder(folder_name):
 def getCurrentFolder():
     return os.getcwd
 
+def checkStatusCode(img_url):
+    headers = {'User-Agent':'Mozilla/5.0 (iPad; CPU OS 13_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/87.0.4280.77 Mobile/15E148 Safari/604.1'}
+    try:
+        if requests.get(img_url, headers=headers).status_code == 200:
+            print("››› Image URL Get Request Successful!")
+            return img_url
+    except:
+        print("››› Image URL Get Request Failed!")
+        return None
+
+
 def createPath(folder_name, file_name):
     #current_folder = getCurrentFolder()
     return os.path.join(os.getcwd(), folder_name, file_name)
@@ -91,3 +111,15 @@ def writeFile(folder_name, file_name, request_object):
     with open(file_path, 'wb') as file:
         file.write(request_object.content)
         file.close()
+
+def testImageDownload(image_url):
+    image = requests.get(image_url, stream = True)
+    file_name = splitString(image_url, '/')[-1]
+    makeNewFolder('test-images')
+    writeFile('test-images', file_name, image)
+    print("››› Image Downloaded")
+
+def writeWithWget(folder_name, image_url):
+    # Use wget download method to download specified image url.
+    folder_path = os.path.join(os.getcwd(), folder_name)
+    image_filename = wget.download(image_url, folder_path)

@@ -15,19 +15,34 @@ def logInToDevsite(driver,devsite,user=config.DEVSITE_USERNAME,pwd=config.DEVSIT
     driver.get(devsite)
     time.sleep(0.2)
 
-    #Log In
-    #have driver enter Username
-    elem = driver.find_element_by_id("user_login")
-    elem.send_keys(user)
+    try:
+        #Log In
+        #have driver enter Username
+        elem = driver.find_element_by_id("user_login")
+        elem.send_keys(user)
 
-    #have driver enter password
-    elem = driver.find_element_by_id("user_pass")
-    elem.send_keys(pwd)
+        #have driver enter password
+        elem = driver.find_element_by_id("user_pass")
+        elem.send_keys(pwd)
 
-    #Click log in button.
-    #WebDriverWait(driver,30).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Log in')]"))).click()
-    driver.find_element_by_xpath("//*[@id='wp-submit']").click()
-    time.sleep(.5)
+        #Click log in button.
+        #WebDriverWait(driver,30).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Log in')]"))).click()
+        driver.find_element_by_xpath("//*[@id='wp-submit']").click()
+        time.sleep(.5)
+    except:
+        #Log In
+        #have driver enter Username
+        elem = driver.find_element_by_id("user_login")
+        elem.send_keys(user)
+
+        #have driver enter password
+        elem = driver.find_element_by_id("user_pass")
+        elem.send_keys(config.DEVSITE_PASSWORD_2)
+
+        #Click log in button.
+        #WebDriverWait(driver,30).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Log in')]"))).click()
+        driver.find_element_by_xpath("//*[@id='wp-submit']").click()
+        time.sleep(.5)
 
     #enter Developer name for DI auditor
     elm = driver.find_elements_by_xpath("//*[@id='user']")
@@ -43,6 +58,24 @@ def logInToDevsite(driver,devsite,user=config.DEVSITE_USERNAME,pwd=config.DEVSIT
 
     return driver
 
+#Sanitizing Inputs
+def url_to_wp_admin(url):
+    urlError = "Error?? UNRECOGNIZED_ADDRESS - Please Insert the base URL for this website and try again"
+
+##    print('url[-5:] == '  + str(url[-5:]) + '\n' + 'url[-12:] == '  + str(url[-12:]))
+    if url[-12:] != "wp/wp-admin/" and url[-5:] != ".com/":
+        print(urlError)
+        return url
+    elif url[-12:] != "wp/wp-admin/" and url[-5:] == ".com/":
+        url = url + "wp/wp-admin/"
+##        print(url)
+        return str(url)
+    elif url[-17:] == ".com/wp/wp-admin/":
+##        print(url)
+        return str(url)
+    else:
+        print(urlError)
+        return None
 
 def nav_DISlides(driver,devsite):
     di_slides_url = devsite.replace("admin.php?page=di-broadcast","edit.php?post_type=di_slide")

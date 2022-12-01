@@ -1,14 +1,37 @@
-import csv, io, requests
+import csv, io, requests, urllib3
+import config
 
 def urlsToMigrate(google_sheet_id):
     pages = []
+    slugs = []
     url = "https://docs.google.com/spreadsheets/d/{0}/export?format=csv".format(google_sheet_id)
-    #urllib3.disable_warnings()
+    urllib3.disable_warnings()
     r = requests.get(url,verify=False)
     sio = io.StringIO(r.text, newline=None)
     reader = csv.reader(sio, dialect=csv.excel)
 
     for row in reader:
+        slugs.append(getInternalSlug(row[0]))
         pages.append(row[0])
 
+    config.SLUG_LIST = slugs
+    print(config.SLUG_LIST)
     return pages
+
+def getInternalSlug(url):
+    try:
+        url_pieces = url.split('.')
+        url_domain = url_pieces[1]
+        if domain_check(url_domain):
+            slug = url_pieces[2] + "/"
+            slug = slug.replace("com","")
+            return slug
+    except:
+        print("Issue Finding slug for: " + url)
+        return url
+
+def domain_check(url_domain):
+    if config.LIVE_SITE_DOMAIN == url_domain:
+        return True
+    else:
+        return False
