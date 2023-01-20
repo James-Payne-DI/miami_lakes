@@ -20,13 +20,13 @@ def urlsToMigrate(google_sheet_id):
 
 def swapInternalSlug(url):
     try:
-        url_pieces = url.split('.')
-        url_domain = url_pieces[1]
+        url_pieces_uno = url.split('.')
+        url_domain = url_pieces_uno[1]
         if domain_check(url_domain):
-            slug = url_pieces[2]
-            slug_pieces = slug.split('/')
-            new_slug = '/' + slug_pieces[-2] + '/'
-            print(new_slug)
+            url_pieces = url.split('/')
+            slug = url_pieces[-1]
+            slug = slug.replace('com/2','2')
+            print("--» Post Slug: " + new_slug)
             return new_slug
 
     except:

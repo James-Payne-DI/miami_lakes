@@ -21,6 +21,7 @@ def addPageMeta(backend_url,meta,driver):
     driver = wpNavigation.logInToDevsite(config.DRIVER_PATH,backend_url)
 
     #elem = driver.find_element_by_link_text("Edit Snippet")
+    time.sleep(0.5)
 
     #Scroll the Yoast SEO box into view
     element = driver.find_element_by_id("wpseo_meta")

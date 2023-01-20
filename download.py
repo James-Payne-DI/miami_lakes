@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import requests, os, shutil, re, date, time, wget
+import requests, os, subprocess, shutil, re, time, wget
 from io import open as iopen
+import date
+from statusReports import GLOBAL_STATUS_REPORT as GSP
+from statusReports import specialPrint
 
 def images(url_list, devsite):
     if len(url_list) < 1:
@@ -13,6 +16,7 @@ def images(url_list, devsite):
         suffix_list = ['jpg', 'gif', 'png', 'tif', 'svg', 'jpeg', 'JPG']
         file_suffix = splitString(url, '.')[-1]
         file_name = splitString(url, '/')[-1]
+        print("file_name: " + file_name  + " | " +  "file_suffix: " + file_suffix)
 
         image = None
         if file_suffix in suffix_list:
@@ -34,11 +38,9 @@ def images(url_list, devsite):
         else:
             print(str(image.status_code) + ' Could not download: ' + url)
 
-
     if directoryCheck('images') == True:
         optomizeImages('images')
 
-    print(dev_links)
     return dev_links
 
 def createDevLink(devsite, img_name):
@@ -75,7 +77,22 @@ def getImageFileName(file_path):
     return file_name
 
 def optomizeImages(folder_name):
-    os.system('/Applications/ImageOptim.app/Contents/MacOS/ImageOptim ' + folder_name)
+    #sets the path name for the image folder
+    path_name = '/Applications/ImageOptim.app/Contents/MacOS/ImageOptim ' + folder_name
+    #optimizes the images with "os.system(path_name)" and keeps the output in the variable assigned with the outer argument
+
+    # Define command and options wanted
+    command = "/Applications/ImageOptim.app/Contents/MacOS/ImageOptim"
+    # Ask user for file name(s) - SECURITY RISK: susceptible to shell injection
+    filename = 'images'
+    path = [command, filename]
+
+    try:
+        print("Trying to Capture the image data")
+        result = subprocess.run(path, capture_output=True)
+    except:
+        print("Subprocess failed")
+        os.system(path_name)
 
 def splitString(str, char):
     string_list = str.split(char)
@@ -92,15 +109,14 @@ def getCurrentFolder():
     return os.getcwd
 
 def checkStatusCode(img_url):
-    headers = {'User-Agent':'Mozilla/5.0 (iPad; CPU OS 13_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/87.0.4280.77 Mobile/15E148 Safari/604.1'}
     try:
+        headers = {'User-Agent':'Mozilla/5.0 (iPad; CPU OS 13_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/87.0.4280.77 Mobile/15E148 Safari/604.1'}
         if requests.get(img_url, headers=headers).status_code == 200:
             print("››› Image URL Get Request Successful!")
             return img_url
     except:
         print("››› Image URL Get Request Failed!")
         return None
-
 
 def createPath(folder_name, file_name):
     #current_folder = getCurrentFolder()
@@ -119,7 +135,10 @@ def testImageDownload(image_url):
     writeFile('test-images', file_name, image)
     print("››› Image Downloaded")
 
+def bar_custom(current, total, width=80):
+    print("Downloading: %d%% [%d / %d] bytes" % (current / total * 100, current, total))
+
 def writeWithWget(folder_name, image_url):
     # Use wget download method to download specified image url.
     folder_path = os.path.join(os.getcwd(), folder_name)
-    image_filename = wget.download(image_url, folder_path)
+    image_filename = wget.download(image_url, folder_path, bar=bar_custom)

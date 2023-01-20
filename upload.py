@@ -125,6 +125,8 @@ def blog(devsite, data, images):
             open_file.close()
 
             media_response = requests.post(media_endpoint, headers=getMediaHeaders(filename), data=bin_file)
+            testImageLink(devsite, str(filename))
+            print("--» Image uploaded")
         download.deleteImgFolder()
 
     return post_id
@@ -168,6 +170,27 @@ def tags(devsite, tags_list):
     return new_tags
 
 
+def testImageLink(devsite, filename):
+    print("›››--------upload.testImageLink called--------")
+    img_url = download.createDevLink(devsite, filename)
+    if download.checkStatusCode(img_url):
+        print("--» Image checked out")
+    else:
+        new_name = str(filename)
+        new_name = new_name.replace(".jpg","-1.jpg")
+        img_url = download.createDevLink(devsite, filename)
+        print(img_url)
+        if download.checkStatusCode(img_url):
+            print("--»  -1 theory SUCCESS!!!")
+        else:
+            print("--» -1 theory FAILURE :(")
+def splitString(str, char):
+    string_list = str.split(char)
+    return string_list
+def getImageLink(devsite, img_name):
+    dev_link = "https://di-uploads-development.dealerinspire.com/" + splitString(splitString(devsite, '/')[2], '.')[0] + '/uploads/' + date.getYear() + '/' + date.getMonth() + '/' + img_name
+    print("››› DI Image Link Created:\n" + str(dev_link))
+    return dev_link
 def csvList(list_item):
     converted_list = [str(element) for element in list_item]
     joined_string = ",".join(converted_list)

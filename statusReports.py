@@ -24,3 +24,9 @@ def create_status_report(GSP):
 
 
         file.close()
+
+
+def specialPrint(print_me, location):
+    print("‹◊› ALERT__________from:[{}]".format(str(location)))
+    print(print_me)
+    print("˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜˜\n")

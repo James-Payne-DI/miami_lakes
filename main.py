@@ -36,13 +36,21 @@ def urlDate(url):
 #Creates the table metaData if one does not already exist
 #db.execute("CREATE TABLE IF NOT EXISTS metaData (pageID INTEGER, pageTitle TEXT, slug TEXT, meta TEXT)")
 
+#Deletes the metaHousing.sqlite file if one already exists
+if os.path.exists("metaHousing.sqlite"):
+	os.remove("metaHousing.sqlite")
+	print("››› Existing version of 'metaHousing.sqlite' found, deleting it...")
+else:
+	print("››› The File Does Not already Exist")
 
+# The devsite we are migrating the content to represented as a string
+devsite = config.DEVSITE_URL
+
+#Gets the User Input for the type of migration we are about to perform
 type_of_run = input("Is this  for Blogs or Pages (blogs/pages)? ")
 
-#devsite we are migrating the content to
-devsite = config.DEVSITE_URL
+#Pulls the URLs we need
 live_urls = Live_Urls.urlsToMigrate(config.GOOGLE_SHEET_ID)
-
 #live_blogs = Live_Urls.urlsToMigrate(config.GOOGLE_SHEET_ID)
 
 
@@ -52,12 +60,7 @@ live_urls = Live_Urls.urlsToMigrate(config.GOOGLE_SHEET_ID)
 #First Loop For eash url in the google sheet - this loop creates each page in the list and adds all the data
 #it also fills out metaData table which was created in line 17 above.
 
-#Deletes the metaHousing.sqlite file if one already exists
-if os.path.exists("metaHousing.sqlite"):
-	os.remove("metaHousing.sqlite")
-	print("››› Existing version of 'metaHousing.sqlite' found, deleting it...")
-else:
-	print("››› The File Does Not already Exist")
+
 
 #Creates Database file and table
 meta_db = open("metaHousing.sqlite", "x")
@@ -69,20 +72,22 @@ db.execute("CREATE TABLE IF NOT EXISTS metaData (pageID INTEGER, pageTitle TEXT,
 # print("››› Connected to sqlite file -- metaData Table created")
 
 if type_of_run == "pages":
+    selectors = config.LIVE_SELECTOR_ID[0]
     #PAGE MIGRATION LOOP
     for url in live_urls:
-        scrape.livePage(url, config.LIVE_SELECTOR_ID, devsite, db)
+        scrape.livePage(url, selectors, devsite, db)
         time.sleep(2)
         db.commit()
-
-if type_of_run == "blogs":
+elif type_of_run == "blogs":
+    selectors = config.LIVE_SELECTOR_ID[1]
     #BLOG MIGRATION LOOP
     for url in live_urls:
         #url_date = urlDate(url)
-        scrape.liveBlog(url, config.LIVE_SELECTOR_ID, devsite, db)
+        scrape.liveBlog(url, selectors, devsite, db)
         time.sleep(2)
         db.commit()
-
+else:
+    print("››› Issue with 'main.py' organization loop ...")
 #close the database to be safe
 db.close()
 
