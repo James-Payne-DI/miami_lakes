@@ -45,7 +45,7 @@ def images(url_list, devsite):
 
 def createDevLink(devsite, img_name):
     dev_link = "https://di-uploads-development.dealerinspire.com/" + splitString(splitString(devsite, '/')[2], '.')[0] + '/uploads/' + date.getYear() + '/' + date.getMonth() + '/' + img_name
-    print("››› DI Image Link Created:\n" + str(dev_link))
+    #print("››› DI Image Link Created:\n" + str(dev_link))
     return dev_link
 
 def cleanUrl(url):

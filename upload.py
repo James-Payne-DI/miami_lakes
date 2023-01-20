@@ -178,7 +178,7 @@ def testImageLink(devsite, filename):
     else:
         new_name = str(filename)
         new_name = new_name.replace(".jpg","-1.jpg")
-        img_url = download.createDevLink(devsite, filename)
+        img_url = download.createDevLink(devsite, new_name)
         print(img_url)
         if download.checkStatusCode(img_url):
             print("--»  -1 theory SUCCESS!!!")
