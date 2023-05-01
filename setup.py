@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import requests, scrape, time, selenium, findby, urllib.request, config
-from requests_html import HTMLSession
+# from requests_html import HTMLSession
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 

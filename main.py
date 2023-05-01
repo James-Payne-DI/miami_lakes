@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import requests, time, json, jsonFunctions, base64, pprint, Live_Urls, scrape, sqlite3, config, os
+import requests, time, json, base64, pprint, scrape, sqlite3, os, csv
+import jsonFunctions, Live_Urls, config
 from addMeta import addPageMeta
 from format import formatMonth
 from statusReports import GLOBAL_STATUS_REPORT as GSP
@@ -13,6 +14,17 @@ from statusReports import create_status_report
 def createBackendURL(dev_site, postID):
     backend_page_url = dev_site + 'wp/wp-admin/post.php?post='+ str(postID) +'&action=edit'
     return backend_page_url
+
+def createCSVfromSQL(save_path, sql_file):
+    conn = sqlite3.connect(sql_file)
+    conn.execute("CREATE TABLE IF NOT EXISTS metaData (pageID INTEGER, pageTitle TEXT, slug TEXT, meta TEXT)")
+    cursor = conn.cursor()
+    cursor.execute("select * from metaData;")
+    with open(save_path, 'w',newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerow([i[0] for i in cursor.description])
+        csv_writer.writerows(cursor)
+    conn.close()
 
 def urlDate(url):
     try:
@@ -37,9 +49,12 @@ def urlDate(url):
 #db.execute("CREATE TABLE IF NOT EXISTS metaData (pageID INTEGER, pageTitle TEXT, slug TEXT, meta TEXT)")
 
 #Deletes the metaHousing.sqlite file if one already exists
+meta_csv_path = config.DESKTOP_PATH + '/' + config.dealership_name + '_' + 'previousRunReport.csv'
 if os.path.exists("metaHousing.sqlite"):
-	os.remove("metaHousing.sqlite")
-	print("››› Existing version of 'metaHousing.sqlite' found, deleting it...")
+    createCSVfromSQL(meta_csv_path, "metaHousing.sqlite")
+    print(meta_csv_path)
+    os.remove("metaHousing.sqlite")
+    print("››› Existing version of 'metaHousing.sqlite' found, deleting it...")
 else:
 	print("››› The File Does Not already Exist")
 
@@ -105,6 +120,10 @@ db = sqlite3.connect("metaHousing.sqlite")
 meta_count = 0
 driver = None
 for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
+    if name == "404 - Page Not Found": continue
+    backup_meta = "Learn more about {} on our website, or visit our dealership in %%di_city%%, %%di_state%%!".format(str(name))
+    if meta == "": meta = backup_meta
+
     start = time.time()
     #do some stuff
 
@@ -123,9 +142,14 @@ for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
     print(duration)
 
     #4.) Close the Driver Window
-    driver.close()
+    driver.quit()
+
+file_name = config.dealership_name + '_' + 'runReport.csv'
+meta_csv_path = config.DESKTOP_PATH + '/' + file_name
+print(meta_csv_path)
 
 if os.path.exists("metaHousing.sqlite"):
+    createCSVfromSQL(meta_csv_path, "metaHousing.sqlite")
     os.remove("metaHousing.sqlite")
     print("››› Deleting 'metaHousing.sqlite' file that was created from this run ...")
 

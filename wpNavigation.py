@@ -13,6 +13,7 @@ def logInToDevsite(driver,devsite,user=config.DEVSITE_USERNAME,pwd=config.DEVSIT
 
     #Use .get to go directly to the broadcaster link on the Hubsite
     driver.get(devsite)
+    driver.maximize_window()
     time.sleep(0.2)
 
     try:
@@ -58,6 +59,60 @@ def logInToDevsite(driver,devsite,user=config.DEVSITE_USERNAME,pwd=config.DEVSIT
 
     return driver
 
+
+def logInToDevsite_slower(driver,devsite,user=config.DEVSITE_USERNAME,pwd=config.DEVSITE_PASSWORD,name="Jimbos Robot"):
+    driver = webdriver.Chrome(str(driver))
+
+    #Use .get to go directly to the broadcaster link on the Hubsite
+    driver.get(devsite)
+    driver.maximize_window()
+    time.sleep(5)
+
+    try:
+        #Log In
+        #have driver enter Username
+        elem = driver.find_element_by_id("user_login")
+        elem.send_keys(user)
+
+        #have driver enter password
+        elem = driver.find_element_by_id("user_pass")
+        elem.send_keys(pwd)
+
+        #Click log in button.
+        #WebDriverWait(driver,30).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Log in')]"))).click()
+        driver.find_element_by_xpath("//*[@id='wp-submit']").click()
+        time.sleep(1.5)
+    except:
+        #Log In
+        #have driver enter Username
+        elem = driver.find_element_by_id("user_login")
+        elem.send_keys(user)
+
+        #have driver enter password
+        elem = driver.find_element_by_id("user_pass")
+        elem.send_keys(config.DEVSITE_PASSWORD_2)
+
+        #Click log in button.
+        #WebDriverWait(driver,30).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Log in')]"))).click()
+        driver.find_element_by_xpath("//*[@id='wp-submit']").click()
+        time.sleep(1.5)
+
+    #enter Developer name for DI auditor
+    elm = driver.find_elements_by_xpath("//*[@id='user']")
+    time.sleep(1.5)
+    if len(elm) > 0:
+        elem = driver.find_element_by_xpath("//*[@id='user']")
+        time.sleep(1.5)
+        elem.send_keys(name)
+        elem = driver.find_element_by_xpath("//*[@id='form--di-audit-log-name']/div/div[2]/div/fieldset/div[2]/input")
+        time.sleep(1.5)
+        driver.execute_script("arguments[0].click();", elem)
+        time.sleep(2)
+
+    time.sleep(1)
+    print("Devsite Entered")
+
+    return driver
 #Sanitizing Inputs
 def url_to_wp_admin(url):
     urlError = "Error?? UNRECOGNIZED_ADDRESS - Please Insert the base URL for this website and try again"

@@ -11,6 +11,13 @@ def images(url_list, devsite):
         print('››› No Images found on the page')
         return
     dev_links = []
+
+
+    # if len(url_list) > 4:
+    #     url_list.pop()
+    #     print("››› removed logo image from the following list using 'url_list.pop()'...")
+    #     specialPrint(url_list, 'download.py > images(url_list, devsite)')
+
     for url in url_list:
         url = cleanUrl(url)
         suffix_list = ['jpg', 'gif', 'png', 'tif', 'svg', 'jpeg', 'JPG']

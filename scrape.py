@@ -1,4 +1,4 @@
-import bs4, requests, sqlite3
+import bs4, requests, sqlite3, re
 from bs4 import BeautifulSoup
 from datetime import datetime
 import format, download, upload, config, statusReports
@@ -17,7 +17,9 @@ def livePage(url, selectors, devsite, db):
     meta = getMeta(soup)
     data = format.data(title, slug, content, meta)
 
+    #confirms if the directory exists
     if download.directoryCheck('images'):
+        #retrieves the filepaths for the images that will be uploaded
         image_file_paths = download.getImageFilePaths()
         #adds List of image file paths to Global Status Report
         GSP[url]['image_file_paths'] = image_file_paths
@@ -160,13 +162,34 @@ def getTitleFromBreadcrumbs(soup):
     return post_title
 
 def getBlogDate(soup):
-    #print("--------- getBlogDate SOUP: ---------")
-    date = soup.find('time', {'class': 'entry-date'})
-    date_string = str(date['datetime'])
-    date_string = date_string[:-6]
-    #date = format.blogDate(date)
+    date_string = ""
+    print("--------- getBlogDate(soup) ---------")
+    try:
+        date = soup.find('time', {'class': 'entry-date'})
+        date_string = str(date['datetime'])
+        date_string = date_string[:-6]
+        date_string =  date_string
+    except:
+        try:
+            specialPrint("TRYING BACKUP METHOD","scrape.py › getBlogDate(soup) » getBlogDate_backup(soup)")
+            #if Errors out try to grab the text from the time tag
+            date_string = getBlogDate_backup(soup)
+        except:
+            specialPrint("TRYING BACKUP METHOD","scrape.py › getBlogDate(soup) » getBlogDate_backup(soup)")
+            #if Neither works, return today's date
+            date_string = "2023-02-02-T09:00:00"
+    finally:
+        print("--» Post Date: " + date_string)
+        return date_string
+
+def getBlogDate_backup(soup):
+    date_string = ""
+    date = soup.findAll('div', {'class': 'entry-meta'})[0]
+    time_tag = str(date.a.time.text)
+    date_string = format.blogDate(time_tag)
     print("--» Post Date: " + date_string)
     return date_string
+
 
 def getContent(soup, selectors, devsite, title):
     #can remove specific sections we don't want migrated and deletes them from the soup
@@ -179,11 +202,17 @@ def getContent(soup, selectors, devsite, title):
 
 
     #gets any tables on the page and formats them as a string
-    # table_string = getTables(soup)
-    # print(table_string)
-    # if table_string != []:
-    #     soup.find('table').replace_with(table_string)
-
+    try:
+        table_strings = getTables(soup)
+        if table_strings != []:
+            tables = soup.find_all('table')
+            count = 0
+            for table in tables:
+                print(table_strings[count])
+                soup.find('table').replace_with(table_strings[count])
+                count += 1
+    except:
+        print("--»in 'getContent()': Issue trying to get the table data --- this broke the script")
 
     #Finds the Content that we do want i.e. ('div', {'class': selectors})
     print('--» Post Selectors: ' + selectors[0] + ' -- ' + selectors[1] + ' -- ' + selectors[2])
@@ -221,10 +250,10 @@ def getMeta(soup):
         return meta.text
 
 def saniSoup(soup):
-    #classList = ["contact1","map1","hours1","contact2","mobileHero","contact-form","form-wrapper","mod-department-hours"]
-    #classList = ["abg-dynamic-content service-make-model-year"]
-    #Below is Norm Reeves:
     classList = config.DECOMP_IDS
+
+    #soup = remove_redundant_images(soup)
+    #new_soup = removeRedundantImages(new_soup)
 
     for target in classList:
         for div in soup.findAll(target[0], {target[1]: target[2]}):
@@ -234,35 +263,62 @@ def saniSoup(soup):
 
 def getTables(soup):
     full_list = []
+    table_strings = []
     # Creating list with all tables
     tables = soup.find_all('table')
     for table in tables:
         # Collecting Ddata
-        for row in table.tbody.find_all('tr'):
-            # Find all data for each column
-            columns = row.find_all('td')
-            full_list.append(columns)
+        try:
+            for row in table.tbody.find_all('tr'):
+                # Find all data for each column
+                columns = row.find_all('td')
+                full_list.append(columns)
 
-    table_string = ""
-    if full_list == []:
-        #print("No Table Found")
-        return full_list
-    else:
-        print("Table Found")
-        table_string = formatTable(full_list)
+            table_string = ""
+            if full_list == []:
+                print("--» No Table Found")
+                return full_list
+            else:
+                print("--» Table Found")
+                table_string = formatTable(full_list)
+                table_strings.append(table_string)
+        except:
+            print("--» Issue trying to get the table data --- this broke the script")
+            continue
 
-    return table_string
+    return table_strings
 
 def formatTable(table_list):
     for row in table_list:
         count = 0
         for cell in row:
-            if cell.p == None:
-                row[count] = '<td></td>'
-            else:
-                newData = '<td style="border: 1px solid black;padding-left:3px">' +  str(cell.p.string) + '</td>'
-                row[count] = newData
-            count  += 1
+            try:
+                if cell == None:
+                    print(cell)
+                    row[count] = '<td></td>'
+                elif cell.text:
+                    print(cell.text)
+                    newData = '<td style="border: 1px solid black;padding-left:3px">' +  str(cell.text) + '</td>'
+                    row[count] = newData
+                else:
+                    newData = '<td style="border: 1px solid black;padding-left:3px">' +  str(cell.div.span.string) + '</td>'
+                    row[count] = newData
+                count += 1
+            except:
+                try:
+                    if cell.b == None:
+                        print(cell)
+                        row[count] = '<td></td>'
+                    elif cell.strong.span:
+                        newData = '<td style="border: 1px solid black;padding-left:3px">' +  str(cell.strong.span.string) + '</td>'
+                        row[count] = newData
+                    else:
+                        newData = '<td style="border: 1px solid black;padding-left:3px">' +  str(cell.div.span.string) + '</td>'
+                        row[count] = newData
+                    count += 1
+                except:
+                    print(cell)
+                    row[count] = '<td></td>'
 
         row.insert(0,'<tr style="display=flex;">')
         row.append("</tr>")
@@ -351,14 +407,14 @@ def removeLiveDomain(url, domain):
 def checkSlugForParent(slug):
     try:
         new_slug = ''
-        url_pieces = url.split('/')
+        url_pieces = slug.split('/')
         new_slug = url_pieces[-2]
         print('_♦_| Slug Text extracted from parent')
         print(new_slug)
         return new_slug
     except:
         print('_♦_| FAILED to extract slug text')
-        url_pieces = url.split('/')
+        url_pieces = slug.split('/')
         specialPrint(url_pieces, 'scrape.py > checkSlugForParent()')
         return slug
 def getSlugFromURL(postUrl):
@@ -372,6 +428,49 @@ def getSlugFromURL(postUrl):
         post_slug = str(split_link[0])
         print("--» Post Slug: " + post_slug)
         return post_slug
+
+
+def remove_redundant_images(soup):
+    try:
+        div_tags = soup.findAll('div',{'class','widget-image'})
+        for tag in div_tags:
+            lower_div = tag.div
+            img = tag.picture.img
+            # if check_specific_case(img):
+            #     pic.decompose()
+            #     specialPrint("SUCCESS - Tag Decomposed prior to download", "scrape.py > remove_redundant_images()")
+            #     continue
+            if check_undesired_image_list(format.get_source_url(img)):
+                lower_div.decompose()
+                print(tag)
+                specialPrint("SUCCESS - Tag Decomposed prior to download", "scrape.py > remove_redundant_images()")
+            else:
+                specialPrint("SUCCESS - Tag Intentionally skipped!", "scrape.py > remove_redundant_images()")
+        return soup
+    except:
+        specialPrint("FAILURE - Tag not Decomposed prior to download :(", "scrape.py > remove_redundant_images()")
+        return soup
+
+def check_specific_case(img_tag):
+    try:
+        img_url = img_tag['src']
+        is_found = re.search("Miami_Lakes_Logo[0-9]{1,4}\.jpeg", img_url)
+        if is_found:
+            print("Specific Case Found!")
+            return True
+        else:
+            return False
+    except:
+        return False
+def check_undesired_image_list(img_url):
+    url = str(img_url)
+    img_list = ["performance[0-9]{1,4}\.png$","exterior[0-9]{1,4}\.png$","technology[0-9]{1,4}\.png$","information[0-9]{1,4}\.png$", "Miami_Lakes_Logo[0-9]{1,4}\.jpeg"]
+    for item in img_list:
+        is_found = re.search(item, url)
+        if is_found:
+            print("Found!")
+            return True
+    return False
 
 
 def getCategoryFromSlug(postUrl):

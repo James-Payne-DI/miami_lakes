@@ -23,6 +23,6 @@ class yoastResource(object):
         resp.status = falcon.HTTP_201
         resp.body = json.dumps({"success": True})
 
-api = falcon.App()
-meta_endpoint = yoastResource(metaTitle="Test Title",metaDesc="lorem Test description yo yo yo")
-api.add_route('/custom_meta', meta_endpoint)
+# api = falcon.App()
+# meta_endpoint = yoastResource(metaTitle="Test Title",metaDesc="lorem Test description yo yo yo")
+# api.add_route('/custom_meta', meta_endpoint)

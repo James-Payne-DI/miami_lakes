@@ -15,7 +15,7 @@ def urlsToMigrate(google_sheet_id):
         pages.append(row[0])
 
     config.SLUG_LIST = slugs
-    print(config.SLUG_LIST)
+    #print(config.SLUG_LIST)
     return pages
 
 def swapInternalSlug(url):
@@ -26,8 +26,8 @@ def swapInternalSlug(url):
             url_pieces = url.split('/')
             slug = url_pieces[-1]
             slug = slug.replace('com/2','2')
-            print("--» Post Slug: " + new_slug)
-            return new_slug
+            print("--» Post Slug: " + slug)
+            return slug
 
     except:
         print("Issue Finding slug for: " + url)
