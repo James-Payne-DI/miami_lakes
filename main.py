@@ -6,6 +6,7 @@ from addMeta import addPageMeta
 from format import formatMonth
 from statusReports import GLOBAL_STATUS_REPORT as GSP
 from statusReports import create_status_report
+from updateDrivers import check_and_update_chromedriver, test_chromedriver
 
 #TODO: Make this work for blogs. It should basically function the same but you'll need to scrape
 #      date-of-publish, categrory, & tags
@@ -47,6 +48,10 @@ def urlDate(url):
 #db = sqlite3.connect("metaHousing.sqlite")
 #Creates the table metaData if one does not already exist
 #db.execute("CREATE TABLE IF NOT EXISTS metaData (pageID INTEGER, pageTitle TEXT, slug TEXT, meta TEXT)")
+
+#Checking Chromedriver version
+check_and_update_chromedriver()
+test_chromedriver()
 
 #Deletes the metaHousing.sqlite file if one already exists
 meta_csv_path = config.DESKTOP_PATH + '/' + config.dealership_name + '_' + 'previousRunReport.csv'
