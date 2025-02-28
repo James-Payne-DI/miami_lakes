@@ -166,7 +166,7 @@ def deletePost(backend_url):
     driver.quit()
 
 def deletePosts(devsite):
-    file_name = config.dealership_name + '_' + 'runReport.csv'
+    file_name = config.dealership_name + '_' + config.MIGRATION_TYPE + '_' 'runReport.csv'
     meta_csv_path = config.DESKTOP_PATH + '/' + file_name
     print(meta_csv_path)
 
@@ -196,7 +196,7 @@ def deletePosts(devsite):
 def reRunMetaLoop(devsite, starter):
     #loops through the metaData table line by line
     starter = int(starter)
-    file_name = config.dealership_name + '_' + 'runReport.csv'
+    file_name = config.dealership_name + '_' + config.MIGRATION_TYPE + '_' 'runReport.csv'
     meta_csv_path = config.DESKTOP_PATH + '/' + file_name
     print(meta_csv_path)
 
@@ -239,7 +239,7 @@ def reRunMetaLoop(devsite, starter):
         print("_♦_| Deleting 'metaHousing.sqlite' file that was created from this run ...")
 
 
-# reRunMetaLoop("https://miamilakesautomall.dev.dealerinspire.com/", 0)
+# reRunMetaLoop(config.DEVSITE_URL, 0)
 # test_url = 'http://contentdevsandbox.dev.dealerinspire.com/wp/wp-admin/post.php?post=826&action=edit'
 # test_meta = "TEST META DESCRIPTION"
 # addPageMeta(test_url,test_meta)

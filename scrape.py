@@ -1,5 +1,6 @@
 import bs4, requests, sqlite3, re
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 from datetime import datetime
 import format, download, upload, config, statusReports
 from statusReports import GLOBAL_STATUS_REPORT as GSP
@@ -52,8 +53,9 @@ def liveBlog(url, selectors, devsite, db):
     GSP[url] = {'page_id':'','page_data':'','error_list':[],'image_file_paths':[],'og_image_links':[],'di_image_links':[]}
 
     slug = getSlug(url)
-    categories = getCategoryFromSlug(url)
-    tags = getCategoriesAsTags(soup)
+    #categories = getCategoryFromSlug(url)
+    categories = getCategories(soup)
+    tags = getTags(soup)
     # Get the date for the blog post
     date = getBlogDate(soup)
     meta = getMeta(soup)
@@ -91,8 +93,11 @@ def getTitle(soup):
     #code on line below is not the original version -- title = soup.find('h1') <-- OG
     # title = soup.find('h1', {'class': 'ddc-page-title'})
     try:
-        title = soup.find('div', {'class': 'titleDiv'})
-        title = title.h1.span.strong
+        # title = soup.find('div', {'class': 'titleDiv'})
+        # title = title.h1.span.strong
+        title = soup.find('div', {'class': 'main-page-header'})
+        title = title.h1
+        print(title)
     except:
         try:
             title = getTitleFromBreadcrumbs(soup)
@@ -165,10 +170,10 @@ def getBlogDate(soup):
     date_string = ""
     print("--------- getBlogDate(soup) ---------")
     try:
-        date = soup.find('time', {'class': 'entry-date'})
-        date_string = str(date['datetime'])
-        date_string = date_string[:-6]
-        date_string =  date_string
+        #date = soup.find('div', {'class': 'date'})
+        date = soup.find('time', {'pubdate': 'pubdate'})
+        date_string = str(date['datetime'] +"T09:00:00")
+        print(date_string)
     except:
         try:
             specialPrint("TRYING BACKUP METHOD","scrape.py › getBlogDate(soup) » getBlogDate_backup(soup)")
@@ -177,7 +182,7 @@ def getBlogDate(soup):
         except:
             specialPrint("TRYING BACKUP METHOD","scrape.py › getBlogDate(soup) » getBlogDate_backup(soup)")
             #if Neither works, return today's date
-            date_string = "2023-02-02-T09:00:00"
+            date_string = "2024-01-09T09:00:00"
     finally:
         print("--» Post Date: " + date_string)
         return date_string
@@ -374,21 +379,23 @@ def getCategories(soup):
     # categories = soup.find('div', {'class': 'categories'})
     clean_categories = []
     error_message = "----- No Categories Found ----- "
+    #categories = soup.find('div', {'class': 'categories'})
     try:
-        categories = soup.find('aside', {'id': 'categories-2'})
+        categories = soup.find('div', {'class': 'categories'})
         if categories is None:
             print("››› In 'If/Else' Statement ---> " + error_message)
             return clean_categories
         else:
-            for category in categories.findAll('li', {'class': 'cat-item'}):
-                category = category.a.text
-                category.strip()
-                #Check the banned list of categories
-                cat_check = format.check_category_black_list(category)
-                #If the category string does not match any banned strings in the list...
-                if cat_check == "CLEAN":
-                    #« then it gets added to the 'clean_categories' array
-                    clean_categories.append(category)
+            for category in categories.findAll('a'):
+                if category.has_attr('href') and category['href'].startswith('/blog/categories/'):
+                    category_name = category.text
+                    category_name.strip()
+                    #Check the banned list of categories
+                    cat_check = format.check_category_black_list(category_name)
+                    #If the category string does not match any banned strings in the list...
+                    if cat_check == "CLEAN":
+                        #« then it gets added to the 'clean_categories' array
+                        clean_categories.append(category_name)
             return clean_categories
     except:
         #print("››› In 'Try/Except' Statement ---> " + error_message)
@@ -417,11 +424,14 @@ def checkSlugForParent(slug):
         url_pieces = slug.split('/')
         specialPrint(url_pieces, 'scrape.py > checkSlugForParent()')
         return slug
+
+
 def getSlugFromURL(postUrl):
     print("›››--------scrape.getSlugFromURL called--------")
     split_link = postUrl.split('/')
     if len(split_link) > 1:
-        post_slug = str(split_link[-2])
+        post_slug = str(split_link[-1])
+        post_slug = post_slug.replace('.htm','')
         print("--» Post Slug: " + post_slug)
         return post_slug
     else:

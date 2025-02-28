@@ -37,6 +37,7 @@ def content(raw_content, devsite, title):
         #Customized Content Cleaning Functions
         #---------Non-Specific---------
         content = remove_extra_title(content)
+        #content = remove_extra_date(content)
 
         #---------Specific For Blog Posts---------
         content = remove_duplicate_image(content)
@@ -92,21 +93,8 @@ def changeSrc(content, devsite, title):
     no_source_count = 0
 
     for img in content.findAll('img'):
-        if img.has_attr('data-src') and img['data-src'] is not None and img['data-src'].startswith('https'):
+        if img.has_attr('src') and img['src'] is not None and img['src'].startswith('https://pictures.dealer.com'):
             #specialPrint(img['data-src'], "format.changeSrc:\n--» data-src detected!")
-            img_src_list.append(img['data-src'])
-            data_src_count += 1
-
-        elif img.has_attr('data-src') and img['data-src'] is not None and img['data-src'].startswith('//cdn-ds'):
-                new_src = str(img['data-src'])
-                new_src = "https:" + new_src
-                if download.checkStatusCode(new_src):
-                    img_src_list.append(new_src)
-                    data_src_count += 1
-                else:
-                    no_source_count += 1
-
-        elif img.has_attr('src') and img['src'] is not None and img['src'].startswith('https://cdn-ds.com'):
             src = str(img['src'])
             if download.checkStatusCode(src):
                 img_src_list.append(src)
@@ -114,6 +102,30 @@ def changeSrc(content, devsite, title):
             else:
                 no_source_count += 1
 
+        elif img.has_attr('src') and img['src'] is not None and img['src'].startswith('//pictures.dealer.com'):
+            new_src = str(img['src'])
+            new_src = "https:" + new_src
+            if download.checkStatusCode(new_src):
+                img_src_list.append(new_src)
+                src_count += 1
+            else:
+                no_source_count += 1
+
+        elif img.has_attr('src') and img['src'] is not None and img['src'].startswith('https://images.remorainc'):
+            src = str(img['src'])
+            if download.checkStatusCode(src):
+                img_src_list.append(src)
+                src_count += 1
+            else:
+                no_source_count += 1
+
+        elif img.has_attr('data-original') and img['data-original'] is not None and img['data-original'].startswith('https://images.remorainc'):
+            src = str(img['src'])
+            if download.checkStatusCode(src):
+                img_src_list.append(src)
+                src_count += 1
+            else:
+                no_source_count += 1
 
         elif img.has_attr('src') and img['src'] is not None and img['src'].startswith('http'):
             # ---»»»»»»»»--- Custom to miami lakes auto mall ---««««««««---
@@ -169,7 +181,14 @@ def changeSrc(content, devsite, title):
         #if this fails, we will skip the 2nd loop by returning all content here.
         print("No DI Image Links Created on this page!")
         return content
-    new_links = testFirstTwoImages(new_links)
+    
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    # The 'testFirstTwoImages' function can be used to check if you have duplicate images being added to a post's content, 
+    # --› and removes them to avoid this bug showing up on the front end of the site
+    # new_links = testFirstTwoImages(new_links)
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    
+    
     print(str(len(new_links)) + " Image Links on This Page!")
     print(new_links)
     # The below loop should adjust the image source to be the DI image
@@ -228,9 +247,9 @@ def data(title, slug, content, meta):
     return data
 
 def blogData(title, slug, content, meta, date, tags, categories, devsite):
-    # print(tags)
-    # print(categories)
-    # print('-'*50)
+    print(tags)
+    print(categories)
+    print('-'*50)
     categories = upload.categories(devsite, categories)
     tags = upload.tags(devsite, tags)
     # print(date)
@@ -328,7 +347,8 @@ def remove_extra_categories(soup):
 
 def remove_extra_date(soup):
     #remove extra <p> tags with date in them
-    date = soup.find('div', {'class': 'dateDiv'})
+    # date = soup.find('div', {'class': 'dateDiv'})
+    date = soup.find('time', {'pubdate': 'pubdate'})
     date.decompose()
     return soup
 
@@ -358,9 +378,9 @@ def find_a_tags(soup):
                 #if "wikimotiveblogs" in url:
                     #do something about it
                 href_string = remove_internal_domain(url)
-                if "wikimotiveblogs.com" in href_string:
-                    href_string = ""
-                link['href'] = href_string.lower()
+                href_string.lower()
+                href_string = process_url(href_string)
+                link['href'] = href_string
                 # if href_string == url:
                 #     specialPrint("URL Match Found!", "format.py > find_a_tags(soup)")
                 #     link['target'] = '_blank'
@@ -714,3 +734,49 @@ def find_table_tags(soup):
             return soup
     except:
         specialPrint('FAILURE - trying to find the tables broke the script.', 'format.py > find_table_tags(soup)')
+
+
+def process_url(url):
+    blog_slug = re.search(r'/blog/\d{4}/\w+/\d+/', url)
+    if blog_slug:
+        # Remove undesired parts using regex
+        cleaned_url = re.sub(r'/blog/\d{4}/\w+/\d+/', '', url)
+        
+        # Remove .htm and replace with a backslash at the end
+        cleaned_url = cleaned_url.replace('.htm', '/') if '.htm' in cleaned_url else cleaned_url
+
+        cleaned_url = '/' + cleaned_url.strip('/') + '/'
+        
+        print("——››› Blog Slug found & adjusted")
+        return cleaned_url
+    elif url.startswith('/new-inventory/index.htm?search='):
+        cleaned_url = url.replace('/new-inventory/index.htm?search=','/new-vehicles/')
+        
+        cleaned_url = '/' + cleaned_url.strip('/') + '/'
+
+        print("——››› Specific Inventory Slug Found & replace, hopefully it worked")
+        return cleaned_url
+    elif url.startswith('/all-inventory/index.htm?search=') or url.startswith('/all-inventory/index?search='):
+        cleaned_url = '/new-vehicles/?_dFR%5Btype%5D%5B0%5D=Used&_dFR%5Btype%5D%5B1%5D=New'
+        
+        print("——››› 'All Inventory' Slug found & adjusted to the VRP Ajax slug for New & Used")
+        return cleaned_url
+    elif "/certified-inventory/index" in url:
+        cleaned_url = "/used-vehicles/certified-pre-owned-vehicles/"
+
+        print("——››› CPO Slug found & adjusted")
+        return cleaned_url
+    elif '/new-inventory/' in url:
+        cleaned_url = '/new-vehicles/'
+
+        print("——››› New Inventory Slug found & adjusted to the base New Vehicles page")
+        return cleaned_url
+    elif '/used-inventory/' in url:
+        cleaned_url = '/used-vehicles/'
+
+        print("——››› Used Inventory Slug found & adjusted to the base Used Vehicles page")
+        return cleaned_url
+    else:
+        return url
+
+

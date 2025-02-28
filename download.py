@@ -43,7 +43,10 @@ def images(url_list, devsite):
             dev_links.append(createDevLink(devsite, file_name))
             #print(dev_links)
         else:
-            print(str(image.status_code) + ' Could not download: ' + url)
+            try:
+                print(str(image.status_code) + ' Could not download: ' + url)
+            except:
+                print('Could not download Image: \n' + url)
 
     if directoryCheck('images') == True:
         optomizeImages('images')

@@ -1,4 +1,4 @@
-import requests, json, base64, jsonFunctions, download, sqlite3, config, date
+import requests, json, base64, jsonFunctions, download, sqlite3, config, date, logging
 from statusReports import specialPrint
 
 user = config.DI_USER
@@ -68,19 +68,17 @@ def page(devsite, data, images):
     return page_id
 
 def blog(devsite, data, images):
+    
     blog_endpoint = getEndpoint(devsite, '/posts')
     media_endpoint = getEndpoint(devsite, '/media')
 
-
-    # print("***********" + 'Categories & Tags' + "***********")
-    # print(data['tags'])
-    # print(data['categories'])
     tag_list = data['tags']
     tag_list = csvList(tag_list)
 
     category_list = data['categories']
     category_list = csvList(category_list)
 
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     blog_response = requests.post(blog_endpoint, headers=getPostHeaders(), data=data)
     print("--» Post Response Status Code: " + str(blog_response.status_code))
@@ -93,18 +91,10 @@ def blog(devsite, data, images):
 
     post_endpoint = blog_endpoint + '/' + str(post_id)
     print("--» Post Endpoint: " + str(post_endpoint))
-    # for i in data['tags']:
-    #     tag_response = requests.post(post_endpoint, headers=getPostHeaders(), data=data['tags'])
-    #     tag_response = tag_response.json()
-    #     tag = tag_response.get('tags')
-    #     print(tag)
-    #
-    # for i in data['categories']:
-    #     category_response = requests.post(post_endpoint, headers=getPostHeaders(), data=data['categories'])
-    #     category_response = category_response.json()
-    #     category = category_response.get('categories')
-    #     print(category)
 
+
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    # Trying to upload the Post Tags via REST
     post_tags = []
     try:
         tag_response = requests.post(post_endpoint, headers=getPostHeaders(), data={'tags':tag_list})
@@ -118,6 +108,8 @@ def blog(devsite, data, images):
         print("_♦_|______________Tags added to Post______________")
 
 
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    # Trying to upload the Post Categories via REST
     post_categories = []
     try:
         category_response = requests.post(post_endpoint, headers=getPostHeaders(), data={'categories':category_list})
@@ -130,11 +122,17 @@ def blog(devsite, data, images):
         category_response = requests.post(post_endpoint, headers=getPostHeaders(), data={'categories':post_categories})
         category_response = category_response.json()
         category = category_response.get('categories')
+        print("--» Post Categories: ", category)
     else:
         print("_♦_|______________Category List added to Post______________")
+    
 
-
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    # Uploading the Image(s) for this post
     print('_♦_|______________Uploading Images________________')
+    
+    # Declaring the 'media_id' variable and setting it equal to 'None'
+    media_id = None
     if images is not None:
         for file in images:
             filename = download.getImageFileName(file)
@@ -144,12 +142,56 @@ def blog(devsite, data, images):
             open_file.close()
 
             media_response = requests.post(media_endpoint, headers=getMediaHeaders(filename), data=bin_file)
-            #testImageLink(devsite, str(filename))
-            print("--» Image uploaded")
-        download.deleteImgFolder()
+            
+            try:
+                media_response = media_response.json()
+                media_id = str(media_response['id'])
+                print("--» Image uploaded ---- ID:", str(media_id))
+            except ValueError as e:  # This handles JSONDecodeError
+                logging.error(f"Failed to parse JSON: {e}")
+                logging.info(f"Response content: {media_response.text}")
+                media_id = None
+                print('_♦_|______________Failed to retrieve Media ID______________')
+            except:
+                print(media_response)
+                media_id = None
+                print('_♦_|______________Failed to retrieve Media ID______________')
 
+            
+            #Setting The Media ID to be used for the Featured Image
+            #media_id = jsonFunctions.getPostId(media_response)
+            
+            
+            #testImageLink(devsite, str(filename))
+            
+        download.deleteImgFolder()
+    
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    # Trying to upload the featured Images via REST
+    if media_id != None:
+        try:
+            #uploads the data
+            featured_media_response = requests.post(post_endpoint, headers=getPostHeaders(), data={'featured_media':media_id})
+            
+            #checks for success of upload
+            featured_media_response = featured_media_response.json()
+            
+            #checks the content we uploaded
+            featured_media = featured_media_response.get('featured_media')
+            print("--» Post Tags: ", featured_media)
+        except:
+            print("_♦_|______________ALERT - NO Feature Image Uploaded______________ ")
+        else:
+            print("_♦_|______________Feature Image added to Post______________")
+    else:
+        print("_♦_|______________ALERT - NO Feature Image Uploaded (missing 'media_id'______________ ")
+
+    # End of Blog Post Uploads function
     return post_id
 
+
+#__________________________________________________________________________________
+#__________________________________________________________________________________
 def categories(devsite, categories_list):
     categories_endpoint = getEndpoint(devsite, '/categories')
     new_categories = []
@@ -159,13 +201,13 @@ def categories(devsite, categories_list):
         #print("***********" + 'Category' + "***********")
         response = response.json()
         #print(response)
-        id = response.get('id')
-        if id == None:
+        category_id = response.get('id')
+        if category_id == None:
             elem = response.get('data')
             elem = elem['term_id']
-            id = elem
+            category_id = elem
         #print(id)
-        new_categories.append(id)
+        new_categories.append(category_id)
     # print(new_categories)
     return new_categories
 

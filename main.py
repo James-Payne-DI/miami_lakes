@@ -41,7 +41,7 @@ def urlDate(url):
         date = year +'-'+ month +'-'+ day + 'T09:00:00'
         return str(date)
     except:
-        return "2022-03-11-T09:00:00"
+        return "2024-01-09T09:00:00"
 
 #establishes the connection to the database within the variable db
 #db = sqlite3.connect("metaHousing.sqlite")
@@ -87,14 +87,17 @@ db.execute("CREATE TABLE IF NOT EXISTS metaData (pageID INTEGER, pageTitle TEXT,
 # print("››› Connected to sqlite file -- metaData Table created")
 
 if type_of_run == "pages":
-    selectors = config.LIVE_SELECTOR_ID[0]
+    selectors = config.LIVE_SELECTOR_ID
     #PAGE MIGRATION LOOP
     for url in live_urls:
         scrape.livePage(url, selectors, devsite, db)
         time.sleep(2)
         db.commit()
 elif type_of_run == "blogs":
-    selectors = config.LIVE_SELECTOR_ID[1]
+    #selectors = config.LIVE_SELECTOR_ID[1]
+    selectors = config.LIVE_SELECTOR_ID
+    print("Blog Selectior______________________")
+    print(selectors)
     #BLOG MIGRATION LOOP
     for url in live_urls:
         #url_date = urlDate(url)
@@ -144,7 +147,8 @@ for page_id, name, slug, meta in db.execute("SELECT * FROM metaData"):
     #4.) Close the Driver Window
     driver.quit()
 
-file_name = config.dealership_name + '_' + 'runReport.csv'
+config.MIGRATION_TYPE = str(type_of_run)
+file_name = config.dealership_name + '_' + config.MIGRATION_TYPE + '_' 'runReport.csv'
 meta_csv_path = config.DESKTOP_PATH + '/' + file_name
 print(meta_csv_path)
 
